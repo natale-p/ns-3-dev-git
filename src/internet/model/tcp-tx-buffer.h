@@ -22,13 +22,44 @@
 #ifndef TCP_TX_BUFFER_H
 #define TCP_TX_BUFFER_H
 
-#include <list>
 #include "ns3/object.h"
 #include "ns3/traced-value.h"
 #include "ns3/sequence-number.h"
+#include "ns3/nstime.h"
 
 namespace ns3 {
 class Packet;
+
+/**
+ * \ingroup tcp
+ *
+ * \brief Item that encloses the application packet and some flags for it
+ */
+class TcpTxItem
+{
+public:
+  /**
+   * \brief Constructor
+   */
+  TcpTxItem ();
+
+  /**
+   * \brief Copy-constructor
+   * \param other TcpTxTag to copy values from
+   */
+  TcpTxItem (const TcpTxItem &other);
+
+  /**
+   * \brief Print the time
+   * \param os ostream
+   */
+  void Print (std::ostream &os) const;
+
+  Ptr<Packet> m_packet; //!< Application packet
+  bool m_retrans;       //!< Indicates if the segment is retransmitted
+  Time m_lastSent;      //!< Timestamp of the time at which the segment has
+                        //   been sent last time
+};
 
 /**
  * \ingroup tcp

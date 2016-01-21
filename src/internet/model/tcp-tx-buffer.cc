@@ -19,7 +19,6 @@
  * Original author: Adrian Sai-wah Tam <adrian.sw.tam@gmail.com>
  */
 
-#include <iostream>
 #include <algorithm>
 
 #include "ns3/packet.h"
@@ -31,6 +30,33 @@
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
+
+TcpTxItem::TcpTxItem ()
+  : m_packet (0),
+    m_retrans (false),
+    m_lastSent (Time::Min ())
+{
+}
+
+TcpTxItem::TcpTxItem (const TcpTxItem &other)
+  : m_packet (other.m_packet),
+    m_retrans (other.m_retrans),
+    m_lastSent (other.m_lastSent)
+{
+}
+
+void
+TcpTxItem::Print (std::ostream &os) const
+{
+  NS_LOG_FUNCTION (this);
+  os << "pkt pointer: " << m_packet;
+
+  if (m_retrans)
+    {
+      os << "[retrans]";
+    }
+  os << ", last sent: " << m_lastSent;
+}
 
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);
 

@@ -208,7 +208,7 @@ public:
 private:
   friend std::ostream & operator<< (std::ostream & os, TcpTxBuffer const & tcpTxBuf);
 
-  typedef std::list<Ptr<Packet> > PacketList; //!< container for data stored in the buffer
+  typedef std::list<TcpTxItem*> PacketList; //!< container for data stored in the buffer
 
   /**
    * \brief Get a block of data not transmitted yet and move it into SentList
@@ -222,9 +222,9 @@ private:
    * \see GetPacketFromList
    * \param numBytes number of bytes to copy
    *
-   * \returns a packet
+   * \return the item that contains the right packet
    */
-  Ptr<Packet> GetNewSegment (uint32_t numBytes);
+  TcpTxItem* GetNewSegment (uint32_t numBytes);
 
   /**
    * \brief Get a block of data previously transmitted
@@ -238,9 +238,9 @@ private:
    *
    * \param numBytes number of bytes to copy
    * \param seq sequence requested
-   * \return a packet
+   * \return the item that contains the right packet
    */
-  Ptr<Packet> GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq);
+  TcpTxItem* GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq);
 
   /**
    * \brief Get a block (which is returned as Packet) from a list
@@ -309,10 +309,33 @@ private:
    * \param startingSeq Starting sequence of the list
    * \param numBytes Bytes to extract, starting from requestedSeq
    * \param requestedSeq Requested sequence
-   * \return a packet
+   * \return the item that contains the right packet
    */
-  Ptr<Packet> GetPacketFromList (PacketList &list, const SequenceNumber32 &startingSeq,
-                                 uint32_t numBytes, const SequenceNumber32 &requestedSeq) const;
+  TcpTxItem* GetPacketFromList (PacketList &list, const SequenceNumber32 &startingSeq,
+                                uint32_t numBytes, const SequenceNumber32 &requestedSeq) const;
+
+  /**
+   * \brief Merge two TcpTxItem
+   *
+   * Merge t2 in t1. It consists in copying the lastSent field if t2 is more
+   * recent than t1. Retransmitted field is copied only if it set in t2 but not
+   * in t1.
+   *
+   * \param t1 first item
+   * \param t2 second item
+   */
+  void MergeItems (TcpTxItem &t1, TcpTxItem &t2) const;
+
+  /**
+   * \brief Split one TcpTxItem
+   *
+   * Move "size" bytes from t2 into t1, copying all the fields.
+   *
+   * \param t1 first item
+   * \param t2 second item
+   * \param size Size to split
+   */
+  void SplitItems (TcpTxItem &t1, TcpTxItem &t2, uint32_t size) const;
 
   PacketList m_appList;  //!< Buffer for application data
   PacketList m_sentList; //!< Buffer for sent (but not acked) data

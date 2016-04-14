@@ -20,10 +20,12 @@
  */
 
 #include <algorithm>
+#include <iostream>
 
 #include "ns3/packet.h"
 #include "ns3/log.h"
 #include "ns3/abort.h"
+#include "ns3/tcp-option-ts.h"
 
 #include "tcp-tx-buffer.h"
 
@@ -144,7 +146,9 @@ TcpTxBuffer::Add (Ptr<Packet> p)
     {
       if (p->GetSize () > 0)
         {
-          m_appList.insert (m_appList.end (), p);
+          TcpTxItem *item = new TcpTxItem ();
+          item->m_packet = p;
+          m_appList.insert (m_appList.end (), item);
           m_size += p->GetSize ();
 
           NS_LOG_INFO ("Updated size=" << m_size << ", lastSeq=" <<
@@ -192,12 +196,15 @@ TcpTxBuffer::CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq)
       return Create<Packet> ();
     }
 
-  Ptr<Packet> outPacket = 0;
+  TcpTxItem *outItem = 0;
 
   if (m_firstByteSeq + m_sentSize >= seq + s)
     {
       // already sent this block completely
-      outPacket = GetTransmittedSegment (s, seq);
+      outItem = GetTransmittedSegment (s, seq);
+      NS_ASSERT (outItem != 0);
+      outItem->m_retrans = true;
+
       NS_LOG_DEBUG ("Retransmitting [" << seq << ";" << seq + s << "|" << s <<
                     "] from " << *this);
     }
@@ -207,7 +214,9 @@ TcpTxBuffer::CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq)
                            "Requesting a piece of new data with an hole");
 
       // this is the first time we transmit this block
-      outPacket = GetNewSegment (s);
+      outItem = GetNewSegment (s);
+      NS_ASSERT (outItem != 0);
+      NS_ASSERT (outItem->m_retrans == false);
 
       NS_LOG_DEBUG ("New segment [" << seq << ";" << seq + s << "|" << s <<
                     "] from " << *this);
@@ -221,41 +230,44 @@ TcpTxBuffer::CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq)
       NS_LOG_DEBUG ("Moving segment [" << m_firstByteSeq + m_sentSize << ";" <<
                     m_firstByteSeq + m_sentSize + amount <<"|" << amount <<
                     "] from " << *this);
-      GetNewSegment (amount);
 
-      // Now get outPacket from the sent list (there will be a merge)
-      outPacket = GetTransmittedSegment (s, seq);
-      NS_LOG_DEBUG ("Retransmitting [" << seq << ";" << seq + s << "|" << s <<
-                    "] from " << *this);
+      outItem = GetNewSegment (amount);
+      NS_ASSERT (outItem != 0);
+
+      // Now get outItem from the sent list (there will be a merge)
+      return CopyFromSequence (numBytes, seq);
     }
 
-  NS_ASSERT (outPacket != 0);
-  NS_ASSERT (outPacket->GetSize () == s);
-  return outPacket->Copy ();
+  outItem->m_lastSent = Simulator::Now ();
+  Ptr<Packet> toRet = outItem->m_packet->Copy ();
+
+  NS_ASSERT (toRet->GetSize () == s);
+
+  return toRet;
 }
 
-Ptr<Packet>
+TcpTxItem*
 TcpTxBuffer::GetNewSegment (uint32_t numBytes)
 {
   NS_LOG_FUNCTION (this << numBytes);
 
   SequenceNumber32 startOfAppList = m_firstByteSeq + m_sentSize;
 
-  Ptr<Packet> p = GetPacketFromList (m_appList, startOfAppList,
-                                     numBytes, startOfAppList);
+  TcpTxItem *item = GetPacketFromList (m_appList, startOfAppList,
+                                       numBytes, startOfAppList);
 
-  // Move p from AppList to SentList
-
-  PacketList::iterator it = std::find (m_appList.begin (), m_appList.end (), p);
+  // Move item from AppList to SentList (should be the first, not too complex)
+  PacketList::iterator it = std::find (m_appList.begin (), m_appList.end (), item);
   NS_ASSERT (it != m_appList.end ());
-  m_appList.erase (it);
-  m_sentList.insert (m_sentList.end (), p);
-  m_sentSize += p->GetSize ();
 
-  return p;
+  m_appList.erase (it);
+  m_sentList.insert (m_sentList.end (), item);
+  m_sentSize += item->m_packet->GetSize ();
+
+  return item;
 }
 
-Ptr<Packet>
+TcpTxItem*
 TcpTxBuffer::GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq)
 {
   NS_LOG_FUNCTION (this << numBytes << seq);
@@ -265,7 +277,19 @@ TcpTxBuffer::GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &s
   return GetPacketFromList (m_sentList, m_firstByteSeq, numBytes, seq);
 }
 
-Ptr<Packet>
+void
+TcpTxBuffer::SplitItems (TcpTxItem &t1, TcpTxItem &t2, uint32_t size) const
+{
+  NS_LOG_FUNCTION (this << size);
+
+  t1.m_packet = t2.m_packet->CreateFragment (0, size);
+  t2.m_packet->RemoveAtStart (size);
+
+  t1.m_lastSent = t2.m_lastSent;
+  t1.m_retrans = t2.m_retrans;
+}
+
+TcpTxItem*
 TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listStartFrom,
                                 uint32_t numBytes, const SequenceNumber32 &seq) const
 {
@@ -298,28 +322,31 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
    * while maxBytes is the end of some packet next in the list).
    */
 
-  Ptr<Packet> outPacket = 0;
+  Ptr<Packet> currentPacket = 0;
+  TcpTxItem *currentItem = 0;
+  TcpTxItem *outItem = 0;
   PacketList::iterator it = list.begin ();
   SequenceNumber32 beginOfCurrentPacket = listStartFrom;
 
   while (it != list.end ())
     {
-      Ptr<Packet> current = (*it);
+      currentItem = *it;
+      currentPacket = currentItem->m_packet;
 
       // The objective of this snippet is to find (or to create) the packet
       // that begin with the sequence seq
 
-      if (seq < beginOfCurrentPacket + current->GetSize ())
+      if (seq < beginOfCurrentPacket + currentPacket->GetSize ())
         {
           // seq is inside the current packet
           if (seq == beginOfCurrentPacket)
             {
               // seq is the beginning of the current packet. Hurray!
-              outPacket = current;
+              outItem = currentItem;
               NS_LOG_INFO ("Current packet starts at seq " << seq <<
-                           " ends at " << seq + outPacket->GetSize ());
+                           " ends at " << seq + currentPacket->GetSize ());
             }
-          else
+          else if (seq > beginOfCurrentPacket)
             {
               // seq is inside the current packet but seq is not the beginning,
               // it's somewhere in the middle. Just fragment the beginning and
@@ -327,37 +354,44 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
               NS_LOG_INFO ("we are at " << beginOfCurrentPacket <<
                            " searching for " << seq <<
                            " and now we recurse because packet ends at "
-                                        << beginOfCurrentPacket + current->GetSize ());
-              Ptr<Packet> p = current->CreateFragment (0, seq - beginOfCurrentPacket);
-              current->RemoveAtStart (seq - beginOfCurrentPacket);
-              list.insert (it, p);
+                                        << beginOfCurrentPacket + currentPacket->GetSize ());
+              TcpTxItem *firstPart = new TcpTxItem ();
+              SplitItems (*firstPart, *currentItem, seq - beginOfCurrentPacket);
+
+              // insert firstPart before currentItem
+              list.insert (it, firstPart);
+
               return GetPacketFromList (list, listStartFrom, numBytes, seq);
+            }
+          else
+            {
+              NS_FATAL_ERROR ("seq < beginOfCurrentPacket: our data is before");
             }
         }
       else
         {
           // Walk the list, the current packet does not contain seq
-          beginOfCurrentPacket += current->GetSize ();
+          beginOfCurrentPacket += currentPacket->GetSize ();
           it++;
           continue;
         }
 
-      NS_ASSERT (outPacket != 0);
+      NS_ASSERT (outItem != 0);
 
       // The objective of this snippet is to find (or to create) the packet
       // that ends after numBytes bytes. We are sure that outPacket starts
       // at seq.
 
-      if (seq + numBytes <= beginOfCurrentPacket + current->GetSize ())
+      if (seq + numBytes <= beginOfCurrentPacket + currentPacket->GetSize ())
         {
           // the end boundary is inside the current packet
-          if (numBytes == current->GetSize ())
+          if (numBytes == currentPacket->GetSize ())
             {
               // the end boundary is exactly the end of the current packet. Hurray!
-              if (current == outPacket)
+              if (currentItem->m_packet == outItem->m_packet)
                 {
                   // A perfect match!
-                  return outPacket;
+                  return outItem;
                 }
               else
                 {
@@ -365,20 +399,27 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
                   // current > outPacket in the list. Merge current with the
                   // previous, and recurse.
                   NS_ASSERT (it != list.begin ());
-                  Ptr<Packet> previous = *(it--);
-                  previous->AddAtEnd (current);
                   list.erase (it);
+
+                  TcpTxItem *previous = *(--it);
+
+                  MergeItems (*previous, *currentItem);
+                  delete currentItem;
+
                   return GetPacketFromList (list, listStartFrom, numBytes, seq);
                 }
             }
-          else if (numBytes < current->GetSize ())
+          else if (numBytes < currentPacket->GetSize ())
             {
               // the end is inside the current packet, but it isn't exactly
               // the packet end. Just fragment, fix the list, and return.
-              Ptr<Packet> p = current->CreateFragment (0, numBytes);
-              current->RemoveAtStart (numBytes);
-              list.insert (it, p);
-              return p;
+              TcpTxItem *firstPart = new TcpTxItem ();
+              SplitItems (*firstPart, *currentItem, numBytes);
+
+              // insert firstPart before currentItem
+              list.insert (it, firstPart);
+
+              return firstPart;
             }
         }
       else
@@ -392,15 +433,19 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
               NS_LOG_WARN ("Cannot reach the end, but this case is covered "
                            "with conditional statements inside CopyFromSequence."
                            "Something has gone wrong, report a bug");
-              return outPacket;
+              return outItem;
             }
 
           // The current packet does not contain the requested end. Merge current
           // with the packet that follows, and recurse
-          Ptr<Packet> next = (*it); // Please remember we have incremented it
-                                    // in the previous if
-          current->AddAtEnd (next);
+          TcpTxItem *next = (*it); // Please remember we have incremented it
+                                   // in the previous if
+
+          MergeItems (*currentItem, *next);
           list.erase (it);
+
+          delete next;
+
           return GetPacketFromList (list, listStartFrom, numBytes, seq);
         }
     }
@@ -408,6 +453,20 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
   NS_FATAL_ERROR ("This point is not reachable");
 }
 
+void
+TcpTxBuffer::MergeItems (TcpTxItem &t1, TcpTxItem &t2) const
+{
+  if (t2.m_retrans == true && t1.m_retrans == false)
+    {
+      t1.m_retrans = true;
+    }
+  if (t1.m_lastSent < t2.m_lastSent)
+    {
+      t1.m_lastSent = t2.m_lastSent;
+    }
+
+  t1.m_packet->AddAtEnd (t2.m_packet);
+}
 
 void
 TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
@@ -427,14 +486,18 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
   PacketList::iterator i = m_sentList.begin ();
   while (i != m_sentList.end ())
     {
-      if (offset >= (*i)->GetSize ())
+      TcpTxItem *item = *i;
+      Ptr<Packet> p = item->m_packet;
+      pktSize = p->GetSize ();
+
+      if (offset >= pktSize)
         { // This packet is behind the seqnum. Remove this packet from the buffer
-          pktSize = (*i)->GetSize ();
           m_size -= pktSize;
           m_sentSize -= pktSize;
           offset -= pktSize;
           m_firstByteSeq += pktSize;
           i = m_sentList.erase (i);
+          delete item;
           NS_LOG_INFO ("While removing up to " << seq <<
                        ".Removed one packet of size " << pktSize <<
                        " starting from " << m_firstByteSeq - pktSize <<
@@ -442,8 +505,9 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
         }
       else if (offset > 0)
         { // Part of the packet is behind the seqnum. Fragment
-          pktSize = (*i)->GetSize () - offset;
-          *i = (*i)->CreateFragment (offset, pktSize);
+          pktSize -= offset;
+          // PacketTags are preserved when fragmenting
+          item->m_packet = item->m_packet->CreateFragment (offset, pktSize);
           m_size -= offset;
           m_sentSize -= offset;
           m_firstByteSeq += offset;
@@ -475,19 +539,19 @@ operator<< (std::ostream & os, TcpTxBuffer const & tcpTxBuf)
   SequenceNumber32 beginOfCurrentPacket = tcpTxBuf.m_firstByteSeq;
   uint32_t sentSize = 0, appSize = 0;
 
-  for (it = tcpTxBuf.m_sentList.begin ();
-       it != tcpTxBuf.m_sentList.end (); ++it)
+  Ptr<Packet> p;
+  for (it = tcpTxBuf.m_sentList.begin (); it != tcpTxBuf.m_sentList.end (); ++it)
     {
+      p = (*it)->m_packet;
       ss << "[" << beginOfCurrentPacket << ";"
-         << beginOfCurrentPacket + (*it)->GetSize () << "|" << (*it)->GetSize () << "|]";
-      sentSize += (*it)->GetSize ();
-      beginOfCurrentPacket += (*it)->GetSize ();
+         << beginOfCurrentPacket + p->GetSize () << "|" << p->GetSize () << "|]";
+      sentSize += p->GetSize ();
+      beginOfCurrentPacket += p->GetSize ();
     }
 
-  for (it = tcpTxBuf.m_appList.begin ();
-       it != tcpTxBuf.m_appList.end (); ++it)
+  for (it = tcpTxBuf.m_appList.begin (); it != tcpTxBuf.m_appList.end (); ++it)
     {
-      appSize += (*it)->GetSize ();
+      appSize += (*it)->m_packet->GetSize ();
     }
 
   os << "Sent list: " << ss.str () << ", size = " << tcpTxBuf.m_sentList.size () <<

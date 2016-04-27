@@ -49,6 +49,7 @@
 #include "tcp-header.h"
 #include "tcp-option-winscale.h"
 #include "tcp-option-ts.h"
+#include "tcp-option-sack-permitted.h"
 #include "rtt-estimator.h"
 #include "tcp-congestion-ops.h"
 
@@ -93,6 +94,10 @@ TcpSocketBase::GetTypeId (void)
     .AddAttribute ("WindowScaling", "Enable or disable Window Scaling option",
                    BooleanValue (true),
                    MakeBooleanAccessor (&TcpSocketBase::m_winScalingEnabled),
+                   MakeBooleanChecker ())
+    .AddAttribute ("SACK", "Enable or disable SACK option",
+                   BooleanValue (false),
+                   MakeBooleanAccessor (&TcpSocketBase::m_sackEnabled),
                    MakeBooleanChecker ())
     .AddAttribute ("Timestamp", "Enable or disable Timestamp option",
                    BooleanValue (true),
@@ -306,6 +311,7 @@ TcpSocketBase::TcpSocketBase (void)
     m_highRxAckMark (0),
     m_bytesAckedNotProcessed (0),
     m_bytesInFlight (0),
+    m_sackEnabled (false),
     m_winScalingEnabled (false),
     m_rcvWindShift (0),
     m_sndWindShift (0),
@@ -384,6 +390,7 @@ TcpSocketBase::TcpSocketBase (const TcpSocketBase& sock)
     m_highRxAckMark (sock.m_highRxAckMark),
     m_bytesAckedNotProcessed (sock.m_bytesAckedNotProcessed),
     m_bytesInFlight (sock.m_bytesInFlight),
+    m_sackEnabled (sock.m_sackEnabled),
     m_winScalingEnabled (sock.m_winScalingEnabled),
     m_rcvWindShift (sock.m_rcvWindShift),
     m_sndWindShift (sock.m_sndWindShift),
@@ -1242,6 +1249,15 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
           m_winScalingEnabled = false;
         }
 
+      if (tcpHeader.HasOption (TcpOption::SACKPERMITTED) && m_sackEnabled)
+        {
+          ProcessOptionSACKPermitted (tcpHeader.GetOption (TcpOption::SACKPERMITTED));
+        }
+      else
+        {
+          m_sackEnabled = false;
+        }
+
       // When receiving a <SYN> or <SYN-ACK> we should adapt TS to the other end
       if (tcpHeader.HasOption (TcpOption::TS) && m_timestampEnabled)
         {
@@ -1450,6 +1466,9 @@ TcpSocketBase::IsTcpOptionEnabled (uint8_t kind) const
       return m_timestampEnabled;
     case TcpOption::WINSCALE:
       return m_winScalingEnabled;
+    case TcpOption::SACKPERMITTED:
+    case TcpOption::SACK:
+      return m_sackEnabled;
     default:
       break;
     }
@@ -2281,6 +2300,11 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
       if (m_winScalingEnabled)
         { // The window scaling option is set only on SYN packets
           AddOptionWScale (header);
+        }
+
+      if (m_sackEnabled)
+        {
+          AddOptionSACKPermitted (header);
         }
 
       if (m_synCount == 0)
@@ -3405,6 +3429,28 @@ TcpSocketBase::AddOptionWScale (TcpHeader &header)
 
   NS_LOG_INFO (m_node->GetId () << " Send a scaling factor of " <<
                static_cast<int> (m_rcvWindShift));
+}
+
+void
+TcpSocketBase::ProcessOptionSACKPermitted (const Ptr<const TcpOption> option)
+{
+  NS_LOG_FUNCTION (this << option);
+
+  Ptr<const TcpOptionSackPermitted> s = DynamicCast<const TcpOptionSackPermitted> (option);
+
+  NS_ASSERT (m_sackEnabled == true);
+  NS_LOG_INFO (m_node->GetId () << " Received a SACK_PERMITTED option " << s);
+}
+
+void
+TcpSocketBase::AddOptionSACKPermitted (TcpHeader &header)
+{
+  NS_LOG_FUNCTION (this << header);
+  NS_ASSERT (header.GetFlags () & TcpHeader::SYN);
+
+  Ptr<TcpOptionSackPermitted> option = CreateObject<TcpOptionSackPermitted> ();
+  header.AppendOption (option);
+  NS_LOG_INFO (m_node->GetId () << " Add option SACK-PERMITTED");
 }
 
 void

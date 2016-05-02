@@ -50,6 +50,7 @@
 #include "tcp-option-winscale.h"
 #include "tcp-option-ts.h"
 #include "tcp-option-sack-permitted.h"
+#include "tcp-option-sack.h"
 #include "rtt-estimator.h"
 #include "tcp-congestion-ops.h"
 
@@ -1476,7 +1477,7 @@ TcpSocketBase::IsTcpOptionEnabled (uint8_t kind) const
 }
 
 void
-TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader)
+TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated)
 {
   NS_LOG_FUNCTION (this << tcpHeader);
   TcpHeader::TcpOptionList::const_iterator it;
@@ -1485,7 +1486,16 @@ TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader)
   for (it = options.begin (); it != options.end (); ++it)
     {
       const Ptr<const TcpOption> option = (*it);
-      // Placeholder for a switch statement
+
+      // Check only for ACK options here
+      switch (option->GetKind ())
+        {
+        case TcpOption::SACK:
+          scoreboardUpdated = ProcessOptionSACK (option);
+          break;
+        default:
+          continue;
+        }
     }
 }
 
@@ -1575,7 +1585,8 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
   NS_ASSERT (0 != (tcpHeader.GetFlags () & TcpHeader::ACK));
   NS_ASSERT (m_tcb->m_segmentSize > 0);
 
-  ReadOptions (tcpHeader);
+  bool scoreboardUpdated = false;
+  ReadOptions (tcpHeader, scoreboardUpdated);
 
   SequenceNumber32 ackNumber = tcpHeader.GetAckNumber ();
 
@@ -3429,6 +3440,16 @@ TcpSocketBase::AddOptionWScale (TcpHeader &header)
 
   NS_LOG_INFO (m_node->GetId () << " Send a scaling factor of " <<
                static_cast<int> (m_rcvWindShift));
+}
+
+bool
+TcpSocketBase::ProcessOptionSACK (const Ptr<const TcpOption> option)
+{
+  NS_LOG_FUNCTION (this << option);
+
+  Ptr<const TcpOptionSack> s = DynamicCast<const TcpOptionSack> (option);
+  TcpOptionSack::SackList list = s->GetSackList ();
+  return m_txBuffer->Update (list);
 }
 
 void

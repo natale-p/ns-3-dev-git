@@ -36,14 +36,16 @@ NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
 TcpTxItem::TcpTxItem ()
   : m_packet (0),
     m_retrans (false),
-    m_lastSent (Time::Min ())
+    m_lastSent (Time::Min ()),
+    m_sacked (false)
 {
 }
 
 TcpTxItem::TcpTxItem (const TcpTxItem &other)
   : m_packet (other.m_packet),
     m_retrans (other.m_retrans),
-    m_lastSent (other.m_lastSent)
+    m_lastSent (other.m_lastSent),
+    m_sacked (other.m_sacked)
 {
 }
 
@@ -51,11 +53,21 @@ void
 TcpTxItem::Print (std::ostream &os) const
 {
   NS_LOG_FUNCTION (this);
+  bool comma = false;
   os << "pkt pointer: " << m_packet;
 
   if (m_retrans)
     {
       os << "[retrans]";
+      comma = true;
+    }
+  if (m_sacked)
+    {
+      if (comma)
+        {
+          os << ",";
+        }
+      os << "[sacked]";
     }
   os << ", last sent: " << m_lastSent;
 }
@@ -285,6 +297,7 @@ TcpTxBuffer::SplitItems (TcpTxItem &t1, TcpTxItem &t2, uint32_t size) const
   t1.m_packet = t2.m_packet->CreateFragment (0, size);
   t2.m_packet->RemoveAtStart (size);
 
+  t1.m_sacked = t2.m_sacked;
   t1.m_lastSent = t2.m_lastSent;
   t1.m_retrans = t2.m_retrans;
 }
@@ -456,6 +469,16 @@ TcpTxBuffer::GetPacketFromList (PacketList &list, const SequenceNumber32 &listSt
 void
 TcpTxBuffer::MergeItems (TcpTxItem &t1, TcpTxItem &t2) const
 {
+  NS_LOG_FUNCTION (this);
+  if (t1.m_sacked == true && t2.m_sacked == true)
+    {
+      t1.m_sacked = true;
+    }
+  else
+    {
+      t1.m_sacked = false;
+    }
+
   if (t2.m_retrans == true && t1.m_retrans == false)
     {
       t1.m_retrans = true;

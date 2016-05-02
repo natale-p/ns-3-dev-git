@@ -59,6 +59,7 @@ public:
   bool m_retrans;       //!< Indicates if the segment is retransmitted
   Time m_lastSent;      //!< Timestamp of the time at which the segment has
                         //   been sent last time
+  bool m_sacked;  //!< Indicates if the segment has been SACKed
 };
 
 /**
@@ -319,7 +320,7 @@ private:
    *
    * Merge t2 in t1. It consists in copying the lastSent field if t2 is more
    * recent than t1. Retransmitted field is copied only if it set in t2 but not
-   * in t1.
+   * in t1. Sacked is copied only if it is true in both items.
    *
    * \param t1 first item
    * \param t2 second item

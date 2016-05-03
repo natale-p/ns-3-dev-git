@@ -1613,6 +1613,22 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
 
   m_tcb->m_lastAckedSeq = ackNumber;
 
+  /* In RFC 5681 the definition of duplicate acknowledgment was strict:
+   *
+   * (a) the receiver of the ACK has outstanding data,
+   * (b) the incoming acknowledgment carries no data,
+   * (c) the SYN and FIN bits are both off,
+   * (d) the acknowledgment number is equal to the greatest acknowledgment
+   *     received on the given connection (TCP.UNA from [RFC793]),
+   * (e) the advertised window in the incoming acknowledgment equals the
+   *     advertised window in the last incoming acknowledgment.
+   *
+   * With RFC 6675, this definition has been reduced:
+   *
+   * (a) the ACK is carrying a SACK block that identifies previously
+   *     unacknowledged and un-SACKed octets between HighACK (TCP.UNA) and
+   *     HighData (m_highTxMark)
+   */
   if (ackNumber == m_txBuffer->HeadSequence ()
       && ackNumber < m_tcb->m_nextTxSequence
       && packet->GetSize () == 0)

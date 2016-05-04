@@ -111,7 +111,7 @@ TcpTxBufferTestCase::TestUpdateScoreboardWithCraftedSACK ()
 
       TcpOptionSack::SackList sackList = sack->GetSackList ();
       TcpOptionSack::SackBlock block = sackList.front ();
-      sackList.pop_front();
+      sackList.pop_front ();
 
       // The first block, assuming all the other are SACKed in order (from 2nd
       // onward) has seq = 1 + (150 * (i+1)) --> i+1 because the first sent
@@ -122,7 +122,7 @@ TcpTxBufferTestCase::TestUpdateScoreboardWithCraftedSACK ()
                              "First sack block is wrong (on the right)");
 
       SequenceNumber32 left = block.first;
-      for (TcpOptionSack::SackList::iterator it = sackList.begin(); it != sackList.end(); ++it)
+      for (TcpOptionSack::SackList::iterator it = sackList.begin (); it != sackList.end (); ++it)
         {
           block = (*it);
 
@@ -135,7 +135,31 @@ TcpTxBufferTestCase::TestUpdateScoreboardWithCraftedSACK ()
           left -= 150;
         }
 
-      txBuf.Update (sack->GetSackList());
+      txBuf.Update (sack->GetSackList ());
+
+      if (i == 0)
+        {
+          NS_TEST_ASSERT_MSG_EQ (false, txBuf.IsLost (SequenceNumber32 (1), 3, 150),
+                                 "SequenceNumber 1 isLost, but for RFC 6675 is not");
+        }
+      else if (i == 1)
+        {
+          NS_TEST_ASSERT_MSG_EQ (false, txBuf.IsLost (SequenceNumber32 (1), 3, 150),
+                                 "SequenceNumber 1 isLost, but for RFC 6675 is not");
+          SequenceNumber32 lost (1 + (150 * i));
+          NS_TEST_ASSERT_MSG_EQ (false, txBuf.IsLost (lost, 3, 150),
+                                 "SequenceNumber " << lost <<
+                                 "isLost, but for RFC 6675 is because is SACKed");
+        }
+      else if (i >= 2)
+        {
+          NS_TEST_ASSERT_MSG_EQ (true, txBuf.IsLost (SequenceNumber32 (1), 3, 150),
+                                 "SequenceNumber 1 ! isLost, but for RFC 6675 is");
+          SequenceNumber32 lost (1 + (150 * i));
+          NS_TEST_ASSERT_MSG_EQ (false, txBuf.IsLost (lost, 3, 150),
+                                 "SequenceNumber " << lost <<
+                                 "isLost, but for RFC 6675 is because is SACKed");
+        }
     }
 }
 

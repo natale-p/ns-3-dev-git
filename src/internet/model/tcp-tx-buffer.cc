@@ -593,7 +593,9 @@ operator<< (std::ostream & os, TcpTxBuffer const & tcpTxBuf)
     {
       p = (*it)->m_packet;
       ss << "[" << beginOfCurrentPacket << ";"
-         << beginOfCurrentPacket + p->GetSize () << "|" << p->GetSize () << "|]";
+         << beginOfCurrentPacket + p->GetSize () << "|" << p->GetSize () << "|";
+      (*it)->Print (ss);
+      ss << "]";
       sentSize += p->GetSize ();
       beginOfCurrentPacket += p->GetSize ();
     }

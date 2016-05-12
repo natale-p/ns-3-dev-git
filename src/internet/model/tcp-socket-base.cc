@@ -2887,7 +2887,7 @@ uint32_t
 TcpSocketBase::UnAckDataCount () const
 {
   NS_LOG_FUNCTION (this);
-  return m_tcb->m_nextTxSequence.Get () - m_txBuffer->HeadSequence ();
+  return m_tcb->m_highTxMark.Get () - m_txBuffer->HeadSequence ();
 }
 
 uint32_t

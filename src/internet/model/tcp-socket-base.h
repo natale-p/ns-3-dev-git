@@ -769,12 +769,18 @@ protected:
 
   /**
    * \brief Return count of number of unacked bytes
+   *
+   * The difference between SND.UNA and HighTx
+   *
    * \returns count of number of unacked bytes
    */
   virtual uint32_t UnAckDataCount (void) const;
 
   /**
    * \brief Return total bytes in flight
+   *
+   * Does not count segments lost and SACKed (or dupACKed)
+   *
    * \returns total bytes in flight
    */
   virtual uint32_t BytesInFlight (void) const;

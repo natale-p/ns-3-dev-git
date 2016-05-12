@@ -844,8 +844,9 @@ TcpSocketBase::Send (Ptr<Packet> p, uint32_t flags)
         }
       // Submit the data to lower layers
       NS_LOG_LOGIC ("txBufSize=" << m_txBuffer->Size () << " state " << TcpStateName[m_state]);
-      if (m_state == ESTABLISHED || m_state == CLOSE_WAIT)
-        { // Try to send the data out
+      if ((m_state == ESTABLISHED || m_state == CLOSE_WAIT) && AvailableWindow () > 0)
+        { // Try to send the data out: Add a little step to allow the application
+          // to fill the buffer
           if (!m_sendPendingDataEvent.IsRunning ())
             {
               m_sendPendingDataEvent = Simulator::Schedule (TimeStep (1),

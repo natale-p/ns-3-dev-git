@@ -1392,13 +1392,7 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
       NS_LOG_LOGIC (this << " Leaving zerowindow persist state");
       m_persistEvent.Cancel ();
 
-      // Try to send more data, since window has been updated
-      if (!m_sendPendingDataEvent.IsRunning ())
-        {
-          m_sendPendingDataEvent = Simulator::Schedule (TimeStep (1),
-                                                        &TcpSocketBase::SendPendingData,
-                                                        this, m_connected);
-        }
+      SendPendingData (m_connected);
     }
 }
 
@@ -1650,12 +1644,7 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
 
   // RFC 6675, Section 5, point (C), try to send more data. NB: (C) is implemented
   // inside SendPendingData
-  if (!m_sendPendingDataEvent.IsRunning ())
-    {
-      m_sendPendingDataEvent = Simulator::Schedule (TimeStep (1),
-                                                    &TcpSocketBase::SendPendingData,
-                                                    this, m_connected);
-    }
+  SendPendingData (m_connected);
 
   // If there is any data piggybacked, store it into m_rxBuffer
   if (packet->GetSize () > 0)

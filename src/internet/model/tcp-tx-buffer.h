@@ -97,6 +97,34 @@ public:
  * In this class we store also the size (in bytes) of the packets inside the
  * SentList in the variable m_sentSize.
  *
+ * SACK management
+ * ---------------
+ *
+ * The SACK informations are usually saved in a data structure referred as
+ * scoreboard. In this implementation, the scoreboard is developed on top
+ * of the existing classes. In particular, instead of saving raw pointers to
+ * packets in TcpTxBuffer we added the capability to store some flags
+ * associated to every segment sent. This is done through the use of the class
+ * TcpTxItem: instead of storing a list of packets, we store a list of TcpTxItem.
+ *
+ * Each item has different flags (check the corresponding documentation) and
+ * maintaining the scoreboard is a matter of traveling the list and set the
+ * SACK flag on the corresponding segment sent.
+ *
+ * Inefficiencies
+ * --------------
+ *
+ * The algorithms outlined in RFC 6675 are full of inefficiencies. In particular,
+ * traveling all the sent list each time it is needed to compute the bytes in
+ * flight is definitely expensive. We try to overcome the issue by maintaining
+ * a pointer to the highest sequence SACKed; in this way, we can avoid traveling
+ * all the list in some cases. Another option could be maintaining a count
+ * of each important status (e.g. the number of packet sacked). However, this
+ * would be different from the algorithms in RFC.
+ *
+ * There are some other possible improvements; if you wish, take a look and try
+ * to add some earlier exit conditions in the loops.
+ *
  * \see Size
  * \see SizeFromSequence
  * \see CopyFromSequence

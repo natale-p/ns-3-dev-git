@@ -787,10 +787,12 @@ API provided by TcpTxBuffer to query the scoreboard; please refer to the
 Doxygen documentation (and the extensive in-code comments) if you want to learn
 more about this implementation.
 
+When SACK attribute is enabled for the receiver socket, the sender will not
+craft any SACK option, relying only on what it receives from the network.
+
 Current limitations
 +++++++++++++++++++
 
-* SACK-enabled receiver is still not supported
 * TcpCongestionOps interface does not contain every possible Linux operation
 * Fast retransmit / fast recovery are bound with TcpSocketBase, thereby preventing easy simulation of TCP Tahoe
 

@@ -97,6 +97,15 @@ public:
  * In this class we store also the size (in bytes) of the packets inside the
  * SentList in the variable m_sentSize.
  *
+ * SACK management
+ * ---------------
+ *
+ * All the informations on the sent segments (e.g. SACK) are saved under
+ * a form of PacketTag (that never leaves this class). The SACK informations
+ * are updated in Update ; other RFC 6675 based methods, such as IsLost,
+ * NextSegment, and BytesInFlight (SetPipe) are provided. Please refer to their
+ * documentation (and in-source comments) if you want more informations.
+ *
  * \see Size
  * \see SizeFromSequence
  * \see CopyFromSequence

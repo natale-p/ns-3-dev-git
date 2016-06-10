@@ -35,6 +35,7 @@ NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
 
 TcpTxItem::TcpTxItem ()
   : m_packet (0),
+    m_lost (false),
     m_retrans (false),
     m_lastSent (Time::Min ()),
     m_sacked (false)
@@ -43,6 +44,7 @@ TcpTxItem::TcpTxItem ()
 
 TcpTxItem::TcpTxItem (const TcpTxItem &other)
   : m_packet (other.m_packet),
+    m_lost (other.m_lost),
     m_retrans (other.m_retrans),
     m_lastSent (other.m_lastSent),
     m_sacked (other.m_sacked)
@@ -56,8 +58,18 @@ TcpTxItem::Print (std::ostream &os) const
   bool comma = false;
   os << "pkt pointer: " << m_packet;
 
+  if (m_lost)
+    {
+      os << "[lost]";
+      comma = true;
+    }
   if (m_retrans)
     {
+      if (comma)
+        {
+          os << ",";
+        }
+
       os << "[retrans]";
       comma = true;
     }
@@ -68,8 +80,13 @@ TcpTxItem::Print (std::ostream &os) const
           os << ",";
         }
       os << "[sacked]";
+      comma = true;
     }
-  os << ", last sent: " << m_lastSent;
+  if (comma)
+    {
+      os << ",";
+    }
+  os << "last sent: " << m_lastSent;
 }
 
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);
@@ -250,6 +267,7 @@ TcpTxBuffer::CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq)
       return CopyFromSequence (numBytes, seq);
     }
 
+  outItem->m_lost = false;
   outItem->m_lastSent = Simulator::Now ();
   Ptr<Packet> toRet = outItem->m_packet->Copy ();
 
@@ -300,6 +318,7 @@ TcpTxBuffer::SplitItems (TcpTxItem &t1, TcpTxItem &t2, uint32_t size) const
   t1.m_sacked = t2.m_sacked;
   t1.m_lastSent = t2.m_lastSent;
   t1.m_retrans = t2.m_retrans;
+  t1.m_lost = t2.m_lost;
 }
 
 TcpTxItem*
@@ -486,6 +505,10 @@ TcpTxBuffer::MergeItems (TcpTxItem &t1, TcpTxItem &t2) const
   if (t1.m_lastSent < t2.m_lastSent)
     {
       t1.m_lastSent = t2.m_lastSent;
+    }
+  if (t2.m_lost)
+    {
+      t1.m_lost = true;
     }
 
   t1.m_packet->AddAtEnd (t2.m_packet);

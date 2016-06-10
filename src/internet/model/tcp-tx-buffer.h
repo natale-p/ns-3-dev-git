@@ -56,6 +56,7 @@ public:
   void Print (std::ostream &os) const;
 
   Ptr<Packet> m_packet; //!< Application packet
+  bool m_lost;          //!< Indicates if the segment has been lost (RTO)
   bool m_retrans;       //!< Indicates if the segment is retransmitted
   Time m_lastSent;      //!< Timestamp of the time at which the segment has
                         //   been sent last time

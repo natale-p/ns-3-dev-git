@@ -56,7 +56,8 @@ public:
   {
     m_rcvAckCb = other.m_rcvAckCb;
     m_processedAckCb = other.m_processedAckCb;
-    m_retrCallback = other.m_retrCallback;
+    m_beforeRetrCallback = other.m_beforeRetrCallback;
+    m_afterRetrCallback = other.m_afterRetrCallback;
     m_forkCb = other.m_forkCb;
   }
 
@@ -88,7 +89,14 @@ public:
    *
    * \param cb callback
    */
-  void SetRetransmitCb (RetrCb cb);
+  void SetAfterRetransmitCb (RetrCb cb);
+
+  /**
+   * \brief Set the callback invoked before the processing of a retransmit timeout
+   *
+   * \param cb callback
+   */
+  void SetBeforeRetransmitCb (RetrCb cb);
 
   /**
    * \brief Set the callback invoked after the forking
@@ -115,7 +123,8 @@ protected:
 private:
   AckManagementCb m_rcvAckCb;
   AckManagementCb m_processedAckCb;
-  RetrCb m_retrCallback;
+  RetrCb m_beforeRetrCallback;
+  RetrCb m_afterRetrCallback;
   Callback<void, Ptr<TcpSocketMsgBase> > m_forkCb;
   UpdateRttCallback m_updateRttCb;
 };
@@ -194,7 +203,7 @@ protected:
 *   signal that an ACK has been received; after the processing of it, the Second
 *   is called
 * - A packet is transmitted to IP layer or received from IP layer (Tx and Rx)
-* - The RTO expires (RTOExpired)
+* - The RTO expires (AfterRTOExpired, BeforeRTOExpired)
 *
 * The default version of such methods is empty; implement their behavior differently,
 * based on what you want to test. Default is empty to avoid the need to implement
@@ -727,7 +736,17 @@ protected:
    * \param tcb Transmission control block
    * \param who where the RTO has expired (SENDER or RECEIVER)
    */
-  virtual void RTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
+  virtual void AfterRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
+  {
+  }
+
+  /**
+   * \brief Rto has expired
+   *
+   * \param tcb Transmission control block
+   * \param who where the RTO has expired (SENDER or RECEIVER)
+   */
+  virtual void BeforeRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
   {
   }
 
@@ -848,8 +867,10 @@ private:
                        const Ptr<const TcpSocketBase> tcp);
   void RxPacketCb     (const Ptr<const Packet> p, const TcpHeader& h,
                        const Ptr<const TcpSocketBase> tcp);
-  void RtoExpiredCb   (const Ptr<const TcpSocketState> tcb,
-                       const Ptr<const TcpSocketBase> tcp);
+  void AfterRetransmitCb   (const Ptr<const TcpSocketState> tcb,
+                            const Ptr<const TcpSocketBase> tcp);
+  void BeforeRetransmitCb   (const Ptr<const TcpSocketState> tcb,
+                             const Ptr<const TcpSocketBase> tcp);
   void UpdateRttHistoryCb (Ptr<const TcpSocketBase> tcp, const SequenceNumber32&seq,
                            uint32_t sz, bool isRetransmission);
   void DataSentCb     (Ptr<Socket> socket, uint32_t size);

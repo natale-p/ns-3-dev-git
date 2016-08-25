@@ -302,7 +302,7 @@ TcpFastRetrTest::ProcessedAck (const Ptr<const TcpSocketState> tcb, const TcpHea
 }
 
 void
-TcpFastRetrTest::RTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
+TcpFastRetrTest::AfterRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who)
 {
   NS_ASSERT_MSG (true == false, "RTO isn't expected here");
 }

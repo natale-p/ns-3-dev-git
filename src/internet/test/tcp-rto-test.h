@@ -41,7 +41,7 @@ public:
 protected:
 
   virtual Ptr<TcpSocketMsgBase> CreateSenderSocket (Ptr<Node> node);
-  virtual void RTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
+  virtual void AfterRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
   virtual void RcvAck      (const Ptr<const TcpSocketState> tcb,
                             const TcpHeader& h, SocketWho who);
   virtual void ProcessedAck (const Ptr<const TcpSocketState> tcb,
@@ -51,7 +51,7 @@ protected:
   virtual void ConfigureEnvironment ();
 
 private:
-  bool m_rtoExpired;
+  bool m_afterRTOExpired;
   bool m_segmentReceived;
 };
 
@@ -69,7 +69,7 @@ protected:
   virtual Ptr<TcpSocketMsgBase> CreateSenderSocket (Ptr<Node> node);
   virtual Ptr<ErrorModel> CreateReceiverErrorModel ();
   virtual void ErrorClose  (SocketWho who);
-  virtual void RTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
+  virtual void AfterRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
   virtual void Tx (const Ptr<const Packet> p, const TcpHeader&h, SocketWho who);
   virtual void FinalChecks ();
 

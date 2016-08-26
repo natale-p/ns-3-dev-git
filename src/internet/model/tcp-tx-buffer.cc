@@ -484,8 +484,15 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
   uint32_t offset = seq - m_firstByteSeq.Get ();  // Number of bytes to remove
   uint32_t pktSize;
   PacketList::iterator i = m_sentList.begin ();
-  while (i != m_sentList.end ())
+  while (m_size > 0 && offset > 0)
     {
+      if (i == m_sentList.end ())
+        {
+          Ptr<Packet> p = CopyFromSequence (offset, m_firstByteSeq);
+          NS_ASSERT (p != 0);
+          i = m_sentList.begin ();
+          NS_ASSERT (i != m_sentList.end ());
+        }
       TcpTxItem *item = *i;
       Ptr<Packet> p = item->m_packet;
       pktSize = p->GetSize ();
@@ -515,11 +522,6 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
                        ", new size=" << pktSize);
           break;
         }
-      else
-        {
-          // offset is 0, so we have discarded data up to seq.
-          break;
-        }
     }
   // Catching the case of ACKing a FIN
   if (m_size == 0)
@@ -529,6 +531,7 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
 
   NS_LOG_DEBUG ("Discarded up to " << seq);
   NS_LOG_LOGIC ("Buffer status after discarding data " << *this);
+  NS_ASSERT (m_firstByteSeq >= seq);
 }
 
 std::ostream &

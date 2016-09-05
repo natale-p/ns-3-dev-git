@@ -164,6 +164,7 @@ def build(bld):
         'model/tcp-option-ts.cc',
         'model/tcp-option-sack-permitted.cc',
         'model/tcp-option-sack.cc',
+        'model/tcp-option-mptcp.cc',
         'model/ipv4-packet-info-tag.cc',
         'model/ipv6-packet-info-tag.cc',
         'model/ipv4-interface-address.cc',
@@ -298,6 +299,7 @@ def build(bld):
         'model/tcp-option-sack-permitted.h',
         'model/tcp-option-sack.h',
         'model/tcp-option-rfc793.h',
+        'model/tcp-option-mptcp.h',
         'model/icmpv4.h',
         'model/icmpv6-header.h',
         # used by routing

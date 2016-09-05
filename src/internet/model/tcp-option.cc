@@ -107,6 +107,7 @@ TcpOption::IsKindKnown (uint8_t kind)
     case SACKPERMITTED:
     case SACK:
     case TS:
+    case MPTCP:
       // Do not add UNKNOWN here
       return true;
     }

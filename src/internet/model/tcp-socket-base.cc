@@ -3817,21 +3817,4 @@ TcpSocketBase::SafeSubtraction (uint32_t a, uint32_t b)
   return 0;
 }
 
-//RttHistory methods
-RttHistory::RttHistory (SequenceNumber32 s, uint32_t c, Time t)
-  : seq (s),
-    count (c),
-    time (t),
-    retx (false)
-{
-}
-
-RttHistory::RttHistory (const RttHistory& h)
-  : seq (h.seq),
-    count (h.count),
-    time (h.time),
-    retx (h.retx)
-{
-}
-
 } // namespace ns3

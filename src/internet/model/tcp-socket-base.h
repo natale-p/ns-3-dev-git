@@ -35,6 +35,7 @@
 #include "ns3/event-id.h"
 #include "tcp-tx-buffer.h"
 #include "tcp-rx-buffer.h"
+#include "tcp-rtt-history.h"
 #include "rtt-estimator.h"
 
 namespace ns3 {
@@ -46,36 +47,6 @@ class Packet;
 class TcpL4Protocol;
 class TcpHeader;
 class TcpCongestionOps;
-
-/**
- * \ingroup tcp
- *
- * \brief Helper class to store RTT measurements
- */
-class RttHistory
-{
-public:
-  /**
-   * \brief Constructor - builds an RttHistory with the given parameters
-   * \param s First sequence number in packet sent
-   * \param c Number of bytes sent
-   * \param t Time this one was sent
-   */
-  RttHistory (SequenceNumber32 s, uint32_t c, Time t);
-  /**
-   * \brief Copy constructor
-   * \param h the object to copy
-   */
-  RttHistory (const RttHistory& h); // Copy constructor
-public:
-  SequenceNumber32  seq;  //!< First sequence number in packet sent
-  uint32_t        count;  //!< Number of bytes sent
-  Time            time;   //!< Time this one was sent
-  bool            retx;   //!< True if this has been retransmitted
-};
-
-/// Container for RttHistory objects
-typedef std::deque<RttHistory> RttHistory_t;
 
 /**
  * \brief Data structure that records the congestion state of a connection

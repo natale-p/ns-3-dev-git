@@ -166,6 +166,7 @@ def build(bld):
         'model/tcp-option-sack.cc',
         'model/tcp-option-mptcp.cc',
         'model/mptcp-crypto.cc',
+        'model/tcp-rtt-history.cc',
         'model/ipv4-packet-info-tag.cc',
         'model/ipv6-packet-info-tag.cc',
         'model/ipv4-interface-address.cc',
@@ -294,6 +295,7 @@ def build(bld):
     headers.source = [
         'model/udp-header.h',
         'model/tcp-header.h',
+        'model/tcp-rtt-history.h',
         'model/tcp-option.h',
         'model/tcp-option-winscale.h',
         'model/tcp-option-ts.h',

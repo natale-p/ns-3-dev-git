@@ -25,7 +25,6 @@
  */
 
 #include "tcp-veno.h"
-#include "ns3/tcp-socket-base.h"
 #include "ns3/log.h"
 
 namespace ns3 {
@@ -189,7 +188,7 @@ TcpVeno::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
     {
       NS_LOG_LOGIC ("We have enough RTT samples to perform Veno calculations.");
 
-      if (tcb->m_cWnd < tcb->m_ssThresh)
+      if (tcb->GetCwnd () < tcb->GetSsThresh ())
         { // Slow start mode. Veno employs same slow start algorithm as NewReno's.
           NS_LOG_LOGIC ("We are in slow start, behave like NewReno.");
           segmentsAcked = TcpNewReno::SlowStart (tcb, segmentsAcked);

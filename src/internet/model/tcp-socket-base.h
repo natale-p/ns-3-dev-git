@@ -36,6 +36,7 @@
 #include "tcp-tx-buffer.h"
 #include "tcp-rx-buffer.h"
 #include "tcp-rtt-history.h"
+#include "tcp-socket-state.h"
 #include "rtt-estimator.h"
 
 namespace ns3 {
@@ -47,114 +48,6 @@ class Packet;
 class TcpL4Protocol;
 class TcpHeader;
 class TcpCongestionOps;
-
-/**
- * \brief Data structure that records the congestion state of a connection
- *
- * In this data structure, basic informations that should be passed between
- * socket and the congestion control algorithm are saved. Through the code,
- * it will be referred as Transmission Control Block (TCB), but there are some
- * differencies. In the RFCs, the TCB contains all the variables that defines
- * a connection, while we preferred to maintain in this class only the values
- * that should be exchanged between socket and other parts, like congestion
- * control algorithms.
- *
- */
-class TcpSocketState : public Object
-{
-public:
-  /**
-   * Get the type ID.
-   * \brief Get the type ID.
-   * \return the object TypeId
-   */
-  static TypeId GetTypeId (void);
-
-  TcpSocketState ();
-
-  /**
-   * \brief Copy constructor.
-   * \param other object to copy.
-   */
-  TcpSocketState (const TcpSocketState &other);
-
-  /**
-   * \brief Definition of the Congestion state machine
-   *
-   * The design of this state machine is taken from Linux v4.0, but it has been
-   * maintained in the Linux mainline from ages. It basically avoids to maintain
-   * a lot of boolean variables, and it allows to check the transitions from
-   * different algorithm in a cleaner way.
-   *
-   * These states represent the situation from a congestion control point of view:
-   * in fact, apart the CA_OPEN state, the other states represent a situation in
-   * which there is a congestion, and different actions should be taken,
-   * depending on the case.
-   *
-   */
-  typedef enum
-  {
-    CA_OPEN,      /**< Normal state, no dubious events */
-    CA_DISORDER,  /**< In all the respects it is "Open",
-                    *  but requires a bit more attention. It is entered when
-                    *  we see some SACKs or dupacks. It is split of "Open" */
-    CA_CWR,       /**< cWnd was reduced due to some Congestion Notification event.
-                    *  It can be ECN, ICMP source quench, local device congestion.
-                    *  Not used in NS-3 right now. */
-    CA_RECOVERY,  /**< CWND was reduced, we are fast-retransmitting. */
-    CA_LOSS,      /**< CWND was reduced due to RTO timeout or SACK reneging. */
-    CA_LAST_STATE /**< Used only in debug messages */
-  } TcpCongState_t;
-
-  /**
-   * \ingroup tcp
-   * TracedValue Callback signature for TcpCongState_t
-   *
-   * \param [in] oldValue original value of the traced variable
-   * \param [in] newValue new value of the traced variable
-   */
-  typedef void (* TcpCongStatesTracedValueCallback)(const TcpCongState_t oldValue,
-                                                    const TcpCongState_t newValue);
-
-  /**
-   * \brief Literal names of TCP states for use in log messages
-   */
-  static const char* const TcpCongStateName[TcpSocketState::CA_LAST_STATE];
-
-  // Congestion control
-  TracedValue<uint32_t>  m_cWnd;            //!< Congestion window
-  TracedValue<uint32_t>  m_ssThresh;        //!< Slow start threshold
-  uint32_t               m_initialCWnd;     //!< Initial cWnd value
-  uint32_t               m_initialSsThresh; //!< Initial Slow Start Threshold value
-
-  // Segment
-  uint32_t               m_segmentSize;     //!< Segment size
-  SequenceNumber32       m_lastAckedSeq;    //!< Last sequence ACKed
-
-  TracedValue<TcpCongState_t> m_congState;    //!< State in the Congestion state machine
-  TracedValue<SequenceNumber32> m_highTxMark; //!< Highest seqno ever sent, regardless of ReTx
-  TracedValue<SequenceNumber32> m_nextTxSequence; //!< Next seqnum to be sent (SND.NXT), ReTx pushes it back
-
-  /**
-   * \brief Get cwnd in segments rather than bytes
-   *
-   * \return Congestion window in segments
-   */
-  uint32_t GetCwndInSegments () const
-  {
-    return m_cWnd / m_segmentSize;
-  }
-
-  /**
-   * \brief Get slow start thresh in segments rather than bytes
-   *
-   * \return Slow start threshold in segments
-   */
-  uint32_t GetSsThreshInSegments () const
-  {
-    return m_ssThresh / m_segmentSize;
-  }
-};
 
 /**
  * \ingroup socket
@@ -355,43 +248,9 @@ public:
   Ptr<TcpRxBuffer> GetRxBuffer (void) const;
 
   /**
-   * \brief Callback pointer for cWnd trace chaining
-   */
-  TracedCallback<uint32_t, uint32_t> m_cWndTrace;
-
-  /**
-   * \brief Callback pointer for ssTh trace chaining
-   */
-  TracedCallback<uint32_t, uint32_t> m_ssThTrace;
-
-  /**
    * \brief Callback pointer for congestion state trace chaining
    */
   TracedCallback<TcpSocketState::TcpCongState_t, TcpSocketState::TcpCongState_t> m_congStateTrace;
-
-  /**
-   * \brief Callback pointer for high tx mark chaining
-   */
-  TracedCallback <SequenceNumber32, SequenceNumber32> m_highTxMarkTrace;
-
-  /**
-   * \brief Callback pointer for next tx sequence chaining
-   */
-  TracedCallback<SequenceNumber32, SequenceNumber32> m_nextTxSequenceTrace;
-
-  /**
-   * \brief Callback function to hook to TcpSocketState congestion window
-   * \param oldValue old cWnd value
-   * \param newValue new cWnd value
-   */
-  void UpdateCwnd (uint32_t oldValue, uint32_t newValue);
-
-  /**
-   * \brief Callback function to hook to TcpSocketState slow start threshold
-   * \param oldValue old ssTh value
-   * \param newValue new ssTh value
-   */
-  void UpdateSsThresh (uint32_t oldValue, uint32_t newValue);
 
   /**
    * \brief Callback function to hook to TcpSocketState congestion state
@@ -400,20 +259,6 @@ public:
    */
   void UpdateCongState (TcpSocketState::TcpCongState_t oldValue,
                         TcpSocketState::TcpCongState_t newValue);
-
-  /**
-   * \brief Callback function to hook to TcpSocketState high tx mark
-   * \param oldValue old high tx mark
-   * \param newValue new high tx mark
-   */
-  void UpdateHighTxMark (SequenceNumber32 oldValue, SequenceNumber32 newValue);
-
-  /**
-   * \brief Callback function to hook to TcpSocketState next tx sequence
-   * \param oldValue old nextTxSeq value
-   * \param newValue new nextTxSeq value
-   */
-  void UpdateNextTxSequence (SequenceNumber32 oldValue, SequenceNumber32 newValue);
 
   /**
    * \brief Install a congestion control algorithm on this socket
@@ -1083,11 +928,16 @@ protected:
   double                   m_msl;           //!< Max segment lifetime
 
   // Window management
+  TracedValue<uint32_t> m_cWnd;        //!< Congestion window
+  TracedValue<uint32_t> m_ssThresh;    //!< Slow start threshold
   uint16_t              m_maxWinSize;  //!< Maximum window size to advertise
   TracedValue<uint32_t> m_rWnd;        //!< Receiver window (RCV.WND in RFC793)
   TracedValue<SequenceNumber32> m_highRxMark;     //!< Highest seqno received
-  SequenceNumber32 m_highTxAck;                   //!< Highest ack sent
+  SequenceNumber32              m_highTxAck;      //!< Highest ack sent
   TracedValue<SequenceNumber32> m_highRxAckMark;  //!< Highest ack received
+  TracedValue<SequenceNumber32> m_highTxMark;     //!< Highest seqno ever sent, regardless of ReTx
+  TracedValue<SequenceNumber32> m_nextTxSequence; //!< Next seqnum to be sent (SND.NXT), ReTx pushes it back
+
   uint32_t                      m_bytesAckedNotProcessed;  //!< Bytes acked, but not processed
   TracedValue<uint32_t>         m_bytesInFlight; //!< Bytes in flight
 

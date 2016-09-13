@@ -33,7 +33,6 @@
 #include "ns3/node.h"
 #include "math.h"
 #include "ns3/tcp-socket-base.h"
-#include "ns3/sequence-number.h"
 #include "ns3/double.h"
 #include "ns3/nstime.h"
 
@@ -111,24 +110,26 @@ TcpHtcp::~TcpHtcp (void)
   NS_LOG_FUNCTION (this);
 }
 
-Ptr<TcpCongestionOps> TcpHtcp::Fork (void)
+Ptr<TcpCongestionOps>
+TcpHtcp::Fork (void)
 {
   NS_LOG_FUNCTION (this);
   return CopyObject<TcpHtcp> (this);
 }
 
-void TcpHtcp::CongestionAvoidance (Ptr<TcpSocketState> tcb,
-                                uint32_t segmentsAcked)
+void
+TcpHtcp::CongestionAvoidance (Ptr<TcpSocketState> tcb,
+                              uint32_t segmentsAcked)
 {
   NS_LOG_FUNCTION (this << tcb << segmentsAcked);
   if (segmentsAcked > 0)
     {
-      double adder = static_cast<double> (((tcb->m_segmentSize
-                                            * tcb->m_segmentSize) + (tcb->m_cWnd * m_alpha)) / tcb->m_cWnd);
+      uint32_t cWnd = tcb->GetCwnd ();
+      double adder = static_cast<double> (((tcb->m_segmentSize * tcb->m_segmentSize) + (cWnd * m_alpha)) / cWnd);
       adder = std::max (1.0, adder);
-      tcb->m_cWnd += static_cast<uint32_t> (adder);
-      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd
-                                         << " ssthresh " << tcb->m_ssThresh);
+      tcb->SetCwnd (cWnd + static_cast<uint32_t> (adder));
+      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh ());
     }
 }
 

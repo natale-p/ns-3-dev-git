@@ -17,8 +17,9 @@
  *
  */
 #include "tcp-bic.h"
+
+#include "ns3/simulator.h"
 #include "ns3/log.h"
-#include "ns3/tcp-socket-base.h"
 
 namespace ns3 {
 
@@ -97,16 +98,20 @@ TcpBic::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
   NS_LOG_FUNCTION (this << tcb << segmentsAcked);
 
-  if (tcb->m_cWnd < tcb->m_ssThresh)
+  uint32_t cWnd = tcb->GetCwnd ();
+  uint32_t ssThresh = tcb->GetSsThresh ();
+
+  if (cWnd < ssThresh)
     {
-      tcb->m_cWnd += tcb->m_segmentSize;
+      tcb->SetCwnd (cWnd + tcb->m_segmentSize);
+      cWnd = tcb->GetCwnd ();
       segmentsAcked -= 1;
 
-      NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh);
+      NS_LOG_INFO ("In SlowStart, updated to cwnd " << cWnd <<
+                   " ssthresh " << ssThresh);
     }
 
-  if (tcb->m_cWnd >= tcb->m_ssThresh && segmentsAcked > 0)
+  if (cWnd >= ssThresh && segmentsAcked > 0)
     {
       m_cWndCnt += segmentsAcked;
       uint32_t cnt = Update (tcb);
@@ -118,9 +123,11 @@ TcpBic::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
        */
       if (m_cWndCnt > cnt)
         {
-          tcb->m_cWnd += tcb->m_segmentSize;
+          NS_ASSERT (cWnd == tcb->GetCwnd ());
+          tcb->SetCwnd (cWnd + tcb->m_segmentSize);
+          cWnd = cWnd + tcb->m_segmentSize;
           m_cWndCnt = 0;
-          NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd);
+          NS_LOG_INFO ("In CongAvoid, updated to cwnd " << cWnd);
         }
       else
         {

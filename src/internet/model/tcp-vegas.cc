@@ -123,7 +123,7 @@ TcpVegas::EnableVegas (Ptr<TcpSocketState> tcb)
   NS_LOG_FUNCTION (this << tcb);
 
   m_doingVegasNow = true;
-  m_begSndNxt = tcb->m_nextTxSequence;
+  m_begSndNxt = tcb->GetNextTxSequence ();
   m_cntRtt = 0;
   m_minRtt = Time::Max ();
 }
@@ -170,7 +170,7 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
       NS_LOG_LOGIC ("A Vegas cycle has finished, we adjust cwnd once per RTT.");
 
       // Save the current right edge for next Vegas cycle
-      m_begSndNxt = tcb->m_nextTxSequence;
+      m_begSndNxt = tcb->GetNextTxSequence ();
 
       /*
        * We perform Vegas calculations only if we got enough RTT samples to
@@ -214,7 +214,7 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
           diff = segCwnd - targetCwnd;
           NS_LOG_DEBUG ("Calculated diff = " << diff);
 
-          if (diff > m_gamma && (tcb->m_cWnd < tcb->m_ssThresh))
+          if (diff > m_gamma && (tcb->GetCwnd () < tcb->GetSsThresh ()))
             {
               /*
                * We are going too fast. We need to slow down and change from
@@ -224,12 +224,12 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
               NS_LOG_LOGIC ("We are going too fast. We need to slow down and "
                             "change to linear increase/decrease mode.");
               segCwnd = std::min (segCwnd, targetCwnd + 1);
-              tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-              tcb->m_ssThresh = GetSsThresh (tcb, 0);
-              NS_LOG_DEBUG ("Updated cwnd = " << tcb->m_cWnd <<
-                            " ssthresh=" << tcb->m_ssThresh);
+              tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+              tcb->SetSsThresh (GetSsThresh (tcb, 0));
+              NS_LOG_DEBUG ("Updated cwnd = " << tcb->GetCwnd () <<
+                            " ssthresh=" << tcb->GetSsThresh ());
             }
-          else if (tcb->m_cWnd < tcb->m_ssThresh)
+          else if (tcb->GetCwnd () < tcb->GetSsThresh ())
             {     // Slow start mode
               NS_LOG_LOGIC ("We are in slow start and diff < m_gamma, so we "
                             "follow NewReno slow start");
@@ -243,10 +243,10 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
                   // We are going too fast, so we slow down
                   NS_LOG_LOGIC ("We are going too fast, so we slow down by decrementing cwnd");
                   segCwnd--;
-                  tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-                  tcb->m_ssThresh = GetSsThresh (tcb, 0);
-                  NS_LOG_DEBUG ("Updated cwnd = " << tcb->m_cWnd <<
-                                " ssthresh=" << tcb->m_ssThresh);
+                  tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+                  tcb->SetSsThresh (GetSsThresh (tcb, 0));
+                  NS_LOG_DEBUG ("Updated cwnd = " << tcb->GetCwnd () <<
+                                " ssthresh=" << tcb->GetSsThresh ());
                 }
               else if (diff < m_alpha)
                 {
@@ -254,9 +254,9 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
                   // so we speed up.
                   NS_LOG_LOGIC ("We are going too slow, so we speed up by incrementing cwnd");
                   segCwnd++;
-                  tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-                  NS_LOG_DEBUG ("Updated cwnd = " << tcb->m_cWnd <<
-                                " ssthresh=" << tcb->m_ssThresh);
+                  tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+                  NS_LOG_DEBUG ("Updated cwnd = " << tcb->GetCwnd () <<
+                                " ssthresh=" << tcb->GetSsThresh ());
                 }
               else
                 {
@@ -264,15 +264,15 @@ TcpVegas::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
                   NS_LOG_LOGIC ("We are sending at the right speed");
                 }
             }
-          tcb->m_ssThresh = std::max (tcb->m_ssThresh, 3 * tcb->m_cWnd / 4);
-          NS_LOG_DEBUG ("Updated ssThresh = " << tcb->m_ssThresh);
+          tcb->SetCwnd (std::max (tcb->GetSsThresh (), 3 * tcb->GetCwnd ()) / 4);
+          NS_LOG_DEBUG ("Updated ssThresh = " << tcb->GetSsThresh ());
         }
 
       // Reset cntRtt & minRtt every RTT
       m_cntRtt = 0;
       m_minRtt = Time::Max ();
     }
-  else if (tcb->m_cWnd < tcb->m_ssThresh)
+  else if (tcb->GetCwnd () < tcb->GetSsThresh ())
     {
       segmentsAcked = TcpNewReno::SlowStart (tcb, segmentsAcked);
     }
@@ -289,7 +289,8 @@ TcpVegas::GetSsThresh (Ptr<const TcpSocketState> tcb,
                        uint32_t bytesInFlight)
 {
   NS_LOG_FUNCTION (this << tcb << bytesInFlight);
-  return std::max (std::min (tcb->m_ssThresh.Get (), tcb->m_cWnd.Get () - tcb->m_segmentSize), 2 * tcb->m_segmentSize);
+  return std::max (std::min (tcb->GetSsThresh (), tcb->GetCwnd () - tcb->m_segmentSize),
+                   2 * tcb->m_segmentSize);
 }
 
 } // namespace ns3

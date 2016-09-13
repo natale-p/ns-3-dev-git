@@ -19,8 +19,7 @@
 #ifndef TCPHYBLA_H
 #define TCPHYBLA_H
 
-#include "ns3/tcp-congestion-ops.h"
-#include "ns3/traced-value.h"
+#include "tcp-congestion-ops.h"
 
 namespace ns3 {
 
@@ -84,7 +83,7 @@ private:
   /**
    * \brief Recalculate algorithm paramenters
    */
-  void RecalcParam (Ptr<TcpSocketState> tcb, const Time& rtt);
+  void RecalcParam (const Time& rtt);
 };
 
 } // namespace ns3

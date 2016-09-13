@@ -27,7 +27,7 @@
 #ifndef TCPVEGAS_H
 #define TCPVEGAS_H
 
-#include "ns3/tcp-congestion-ops.h"
+#include "tcp-congestion-ops.h"
 
 namespace ns3 {
 

@@ -110,9 +110,9 @@ TcpScalable::CongestionAvoidance (Ptr<TcpSocketState> tcb,
 
   if (segCwnd != oldCwnd)
     {
-      tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh);
+      tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh ());
     }
 }
 

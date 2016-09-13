@@ -16,11 +16,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-
 #ifndef TCPBIC_H
 #define TCPBIC_H
 
-#include "ns3/tcp-congestion-ops.h"
+#include "tcp-congestion-ops.h"
 #include "ns3/traced-value.h"
 
 namespace ns3 {

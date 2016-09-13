@@ -34,8 +34,7 @@
 #define TCP_WESTWOOD_H
 
 #include "tcp-congestion-ops.h"
-#include "ns3/sequence-number.h"
-#include "ns3/traced-value.h"
+#include "ns3/event-id.h"
 
 namespace ns3 {
 

@@ -16,12 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef TCPCONGESTIONOPS_H
-#define TCPCONGESTIONOPS_H
+#ifndef TCP_CONGESTION_OPS_H
+#define TCP_CONGESTION_OPS_H
 
-#include "ns3/object.h"
-#include "ns3/timer.h"
-#include "ns3/tcp-socket-base.h"
+#include "ns3/nstime.h"
+#include "tcp-socket-state.h"
 
 namespace ns3 {
 
@@ -196,4 +195,4 @@ protected:
 
 } // namespace ns3
 
-#endif // TCPCONGESTIONOPS_H
+#endif // TCP_CONGESTION_OPS_H

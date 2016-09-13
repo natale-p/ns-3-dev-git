@@ -27,7 +27,7 @@
 #ifndef TCPVENO_H
 #define TCPVENO_H
 
-#include "ns3/tcp-congestion-ops.h"
+#include "tcp-congestion-ops.h"
 
 namespace ns3 {
 

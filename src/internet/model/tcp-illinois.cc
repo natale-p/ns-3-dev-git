@@ -27,7 +27,6 @@
 
 
 #include "tcp-illinois.h"
-#include "ns3/tcp-socket-base.h"
 #include "ns3/log.h"
 
 namespace ns3 {
@@ -167,7 +166,7 @@ TcpIllinois::CongestionStateSet (Ptr<TcpSocketState> tcb,
       m_beta = m_betaBase;
       m_rttLow = 0;
       m_rttAbove = false;
-      Reset (tcb->m_nextTxSequence);
+      Reset (tcb->GetNextTxSequence ());
     }
 }
 
@@ -178,15 +177,15 @@ TcpIllinois::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 
   if (tcb->m_lastAckedSeq >= m_endSeq)
     {
-      RecalcParam (tcb->m_cWnd);
-      Reset (tcb->m_nextTxSequence);
+      RecalcParam (tcb->GetCwnd ());
+      Reset (tcb->GetNextTxSequence ());
     }
 
-  if (tcb->m_cWnd < tcb->m_ssThresh)
+  if (tcb->GetCwnd () < tcb->GetSsThresh ())
     {
       segmentsAcked = TcpNewReno::SlowStart (tcb, segmentsAcked);
-      NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh);
+      NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh ());
     }
   else
     {
@@ -206,9 +205,9 @@ TcpIllinois::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 
       if (segCwnd != oldCwnd)
         {
-          tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-          NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<
-                       " ssthresh " << tcb->m_ssThresh);
+          tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+          NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->GetCwnd () <<
+                       " ssthresh " << tcb->GetSsThresh ());
         }
     }
 }

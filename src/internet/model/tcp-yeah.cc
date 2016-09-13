@@ -25,7 +25,6 @@
  */
 
 #include "tcp-yeah.h"
-#include "ns3/tcp-socket-base.h"
 #include "ns3/log.h"
 
 namespace ns3 {
@@ -187,7 +186,7 @@ TcpYeah::CongestionStateSet (Ptr<TcpSocketState> tcb,
 
   if (newState == TcpSocketState::CA_OPEN)
     {
-      EnableYeah (tcb->m_nextTxSequence);
+      EnableYeah (tcb->GetNextTxSequence ());
     }
   else
     {
@@ -200,7 +199,7 @@ TcpYeah::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
   NS_LOG_FUNCTION (this << tcb << segmentsAcked);
 
-  if (tcb->m_cWnd < tcb->m_ssThresh)
+  if (tcb->GetCwnd () < tcb->GetSsThresh ())
     {
       NS_LOG_LOGIC ("In slow start, invoke NewReno slow start.");
       segmentsAcked = TcpNewReno::SlowStart (tcb, segmentsAcked);
@@ -209,8 +208,8 @@ TcpYeah::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
     { // Fast mode
       NS_LOG_LOGIC ("In Fast mode, increment cwnd according to STCP rule.");
       m_stcp->IncreaseWindow (tcb, segmentsAcked);
-      NS_LOG_INFO ("In Fast mode, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh);
+      NS_LOG_INFO ("In Fast mode, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh ());
     }
   else
     { // Behave like NewReno
@@ -262,12 +261,12 @@ TcpYeah::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
                   uint32_t reduction = std::min (queue / m_gamma, segCwnd >> m_epsilon);
                   segCwnd -= reduction;
                   segCwnd = std::max (segCwnd, m_renoCount);
-                  tcb->m_cWnd = segCwnd * tcb->m_segmentSize;
-                  tcb->m_ssThresh = tcb->m_cWnd;
+                  tcb->SetCwnd (segCwnd * tcb->m_segmentSize);
+                  tcb->SetSsThresh (tcb->GetCwnd ());
 
                   NS_LOG_INFO ("In Slow mode, after precautionary decongestion, "
-                               "updated to cwnd " << tcb->m_cWnd <<
-                               " ssthresh " << tcb->m_ssThresh);
+                               "updated to cwnd " << tcb->GetCwnd () <<
+                               " ssthresh " << tcb->GetSsThresh ());
                 }
 
               if (m_renoCount <= 2)
@@ -299,7 +298,7 @@ TcpYeah::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
         }
 
       // Save the current right edge for next Yeah cycle
-      m_begSndNxt = tcb->m_nextTxSequence;
+      m_begSndNxt = tcb->GetNextTxSequence ();
 
       // Reset cntRtt & minRtt
       m_cntRtt = 0;

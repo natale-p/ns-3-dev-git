@@ -69,7 +69,7 @@ TcpHybla::~TcpHybla ()
 }
 
 void
-TcpHybla::RecalcParam (Ptr<TcpSocketState> tcb, const Time &rtt)
+TcpHybla::RecalcParam (const Time &rtt)
 {
   NS_LOG_FUNCTION (this << rtt);
 
@@ -87,7 +87,7 @@ TcpHybla::PktsAcked (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked,
 
   if (rtt < m_minRtt)
     {
-      RecalcParam (tcb, rtt);
+      RecalcParam (rtt);
       m_minRtt = rtt;
       NS_LOG_DEBUG ("Updated m_minRtt=" << m_minRtt);
     }
@@ -98,7 +98,10 @@ TcpHybla::SlowStart (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
   NS_LOG_FUNCTION (this << tcb << segmentsAcked);
 
-  NS_ASSERT (tcb->m_cWnd <= tcb->m_ssThresh);
+  uint32_t cWnd = tcb->GetCwnd ();
+  uint32_t ssThresh = tcb->GetSsThresh ();
+
+  NS_ASSERT (cWnd <= ssThresh);
 
   if (segmentsAcked >= 1)
     {
@@ -110,11 +113,10 @@ TcpHybla::SlowStart (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
       double increment = std::pow (2, m_rho) - 1.0;
       NS_LOG_INFO ("Slow start: inc=" << increment);
 
-      tcb->m_cWnd = std::min (tcb->m_cWnd + (increment * tcb->m_segmentSize),
-                              tcb->m_ssThresh);
+      tcb->SetCwnd (std::min (cWnd + (static_cast<uint32_t> (increment) * tcb->m_segmentSize), ssThresh));
 
-      NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh <<
+      NS_LOG_INFO ("In SlowStart, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh () <<
                    " with an increment of " << increment * tcb->m_segmentSize);
 
       return segmentsAcked - 1;
@@ -156,11 +158,11 @@ TcpHybla::CongestionAvoidance (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
          to setup a limit on the maximum increment of the cWnd per ACK received.
          The remaining increment is leaved for the next ACK. */
 
-      tcb->m_cWnd += inc * tcb->m_segmentSize;
+      tcb->SetCwnd (tcb->GetCwnd () + (inc * tcb->m_segmentSize));
 
 
-      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<
-                   " ssthresh " << tcb->m_ssThresh <<
+      NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->GetCwnd () <<
+                   " ssthresh " << tcb->GetSsThresh () <<
                    " with an increment of " << inc * tcb->m_segmentSize);
     }
 }

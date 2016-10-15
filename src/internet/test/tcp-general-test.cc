@@ -621,7 +621,18 @@ TcpGeneralTest::GetSegSize (SocketWho who)
 SequenceNumber32
 TcpGeneralTest::GetHighestTxMark (SocketWho who)
 {
-  return GetTcb (who)->m_highTxMark;
+  if (who == SENDER)
+    {
+      return DynamicCast<TcpSocketMsgBase> (m_senderSocket)->m_highTxMark;
+    }
+  else if (who == RECEIVER)
+    {
+      return DynamicCast<TcpSocketMsgBase> (m_receiverSocket)->m_highTxMark;
+    }
+  else
+    {
+      NS_FATAL_ERROR ("Not defined");
+    }
 }
 
 uint32_t
@@ -1047,7 +1058,7 @@ TcpSocketSmallAcks::SendEmptyPacket (uint8_t flags)
 {
   Ptr<Packet> p = Create<Packet> ();
   TcpHeader header;
-  SequenceNumber32 s = m_tcb->m_nextTxSequence;
+  SequenceNumber32 s = m_nextTxSequence;
 
   /*
    * Add tags for each socket option.

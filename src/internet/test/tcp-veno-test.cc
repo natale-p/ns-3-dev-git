@@ -39,7 +39,7 @@ NewReno_SlowStart (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
   if (segmentsAcked >= 1)
     {
-      tcb->m_cWnd += tcb->m_segmentSize;
+      tcb->SetCwnd (tcb->GetCwnd () + tcb->m_segmentSize);
       return segmentsAcked - 1;
     }
 
@@ -51,21 +51,21 @@ NewReno_CongestionAvoidance (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
   if (segmentsAcked > 0)
     {
-      double adder = static_cast<double> (tcb->m_segmentSize * tcb->m_segmentSize) / tcb->m_cWnd.Get ();
+      double adder = static_cast<double> (tcb->m_segmentSize * tcb->m_segmentSize) / tcb->GetCwnd ();
       adder = std::max (1.0, adder);
-      tcb->m_cWnd += static_cast<uint32_t> (adder);
+      tcb->SetCwnd (tcb->GetCwnd () + static_cast<uint32_t> (adder));
     }
 }
 
 static void
 NewReno_IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {
-  if (tcb->m_cWnd < tcb->m_ssThresh)
+  if (tcb->GetCwnd () < tcb->GetSsThresh ())
     {
       segmentsAcked = NewReno_SlowStart (tcb, segmentsAcked);
     }
 
-  if (tcb->m_cWnd >= tcb->m_ssThresh)
+  if (tcb->GetCwnd () >= tcb->GetSsThresh ())
     {
       NewReno_CongestionAvoidance (tcb, segmentsAcked);
     }
@@ -121,11 +121,15 @@ TcpVenoTest::TcpVenoTest (uint32_t cWnd,
 void
 TcpVenoTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_ssThresh = &localSsThresh;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
-  m_state->m_ssThresh = m_ssThresh;
 
   Ptr<TcpVeno> cong = CreateObject <TcpVeno> ();
 
@@ -153,10 +157,15 @@ TcpVenoTest::DoRun ()
 
   uint32_t cntRtt = 0;
 
+  TracedValue<uint32_t> otherLocalCwnd = m_cWnd;
+  TracedValue<uint32_t> otherLlocalSsThresh = m_ssThresh;
+  StateTracedValues tracedValues2;
+  tracedValues2.m_cWnd = &otherLocalCwnd;
+  tracedValues2.m_ssThresh = &otherLlocalSsThresh;
+
   TcpSocketState state;
-  state.m_cWnd = m_cWnd;
-  state.m_ssThresh = m_ssThresh;
   state.m_segmentSize = m_segmentSize;
+  state.SetTracedValues(tracedValues2);
 
   while (m_numRtt != 0)
     {
@@ -168,10 +177,10 @@ TcpVenoTest::DoRun ()
       if (cntRtt == 0)
         {
           // Update ssthresh using Veno's multiplicative decrease algorithm
-          uint32_t ssThresh = cong->GetSsThresh (m_state, m_state->m_cWnd);
+          uint32_t ssThresh = cong->GetSsThresh (m_state, m_state->GetCwnd ());
 
           // Our calculation of ssthresh
-          uint32_t calculatedSsThresh = MultiplicativeDecrease (diff, beta, m_state->m_cWnd.Get ());
+          uint32_t calculatedSsThresh = MultiplicativeDecrease (diff, beta, m_state->GetCwnd ());
 
           NS_TEST_ASSERT_MSG_EQ (ssThresh, calculatedSsThresh,
                                  "Veno has not decremented cWnd correctly based on its"
@@ -188,7 +197,7 @@ TcpVenoTest::DoRun ()
           AdditiveIncrease (&state, diff, beta);
         }
 
-      NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), state.m_cWnd.Get (),
+      NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), state.GetCwnd (),
                              "CWnd has not updated correctly based on Veno linear increase algorithm");
       m_numRtt--;
       cntRtt++;

@@ -178,19 +178,13 @@ Ptr<Socket>
 TcpL4Protocol::CreateSocket (TypeId congestionTypeId)
 {
   NS_LOG_FUNCTION (this << congestionTypeId.GetName ());
-  ObjectFactory rttFactory;
-  ObjectFactory congestionAlgorithmFactory;
-  rttFactory.SetTypeId (m_rttTypeId);
-  congestionAlgorithmFactory.SetTypeId (congestionTypeId);
 
-  Ptr<RttEstimator> rtt = rttFactory.Create<RttEstimator> ();
   Ptr<TcpSocketBase> socket = CreateObject<TcpSocketBase> ();
-  Ptr<TcpCongestionOps> algo = congestionAlgorithmFactory.Create<TcpCongestionOps> ();
 
   socket->SetNode (m_node);
-  socket->SetTcp (this);
-  socket->SetRtt (rtt);
-  socket->SetCongestionControlAlgorithm (algo);
+  socket->SetL4Protocol (this);
+  socket->SetRttTypeId (m_rttTypeId);
+  socket->SetCongestionTypeId (m_congestionTypeId);
 
   m_sockets.push_back (socket);
   return socket;

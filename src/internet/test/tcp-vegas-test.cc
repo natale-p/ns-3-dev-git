@@ -86,12 +86,17 @@ TcpVegasTest::TcpVegasTest (uint32_t cWnd,
 void
 TcpVegasTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  TracedValue<SequenceNumber32> localNextTx = m_nextTxSeq;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_nextTxSequence = &localNextTx;
+  tracedValues.m_ssThresh = &localSsThresh;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
-  m_state->m_ssThresh = m_ssThresh;
-  m_state->m_nextTxSequence = m_nextTxSeq;
   m_state->m_lastAckedSeq = m_lastAckedSeq;
 
   Ptr<TcpVegas> cong = CreateObject <TcpVegas> ();
@@ -113,9 +118,9 @@ TcpVegasTest::DoRun ()
   // Our calculation of cwnd
   IncreaseWindow (cong);
 
-  NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), m_cWnd,
+  NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), m_cWnd,
                          "CWnd has not updated correctly");
-  NS_TEST_ASSERT_MSG_EQ (m_state->m_ssThresh.Get (), m_ssThresh,
+  NS_TEST_ASSERT_MSG_EQ (m_state->GetSsThresh (), m_ssThresh,
                          "SsThresh has not updated correctly");
 }
 

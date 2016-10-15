@@ -1,7 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2007 Georgia Tech Research Corporation
- * Copyright (c) 2010 Adrian Sai-wah Tam
+ * Copyright (c) 2016 Natale Patriciello <natale.patriciello@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,14 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Adrian Sai-wah Tam <adrian.sw.tam@gmail.com>
  */
-
-#define NS_LOG_APPEND_CONTEXT \
-  if (m_node) { std::clog << " [node " << m_node->GetId () << "] "; }
-
 #include "tcp-socket-base.h"
-#include "ns3-tcp-socket-impl.h"
+#include "ns3-tcp-implementation.h"
 #include "tcp-rx-buffer.h"
 #include "tcp-tx-buffer.h"
 #include "tcp-l4-protocol.h"
@@ -625,7 +619,7 @@ TcpSocketBase::SetL4Protocol (const Ptr<TcpL4Protocol> &l4Protocol)
 bool
 TcpSocketBase::GetMPTCPEnabled () const
 {
-  return m_implementation->GetInstanceTypeId() != Ns3TcpSocketImpl::GetTypeId ();
+  return m_implementation->GetInstanceTypeId() != Ns3TcpImplementation::GetTypeId ();
 }
 
 void
@@ -637,16 +631,16 @@ TcpSocketBase::SetMPTCPEnabled (bool enabled)
   congAlgoFactory.SetTypeId (m_congestionTypeId);
 
   struct TcpTracedValues values;
-  values.SetBytesInFlightPointer (&m_bytesInFlight);
-  values.SetCWndPointer(&m_cWnd);
-  values.SetHighRxAckMarkPointer(&m_highRxAckMark);
-  values.SetHighRxMarkPointer(&m_highRxMark);
-  values.SetHighTxMarkPointer (&m_highTxMark);
-  values.SetLastRttPointer(&m_lastRtt);
-  values.SetNextTxSequencePointer(&m_nextTxSequence);
-  values.SetRtoPointer(&m_rto);
-  values.SetRWndPointer(&m_rWnd);
-  values.SetSSThreshPointer(&m_ssThresh);
+  values.m_bytesInFlight = &m_bytesInFlight;
+  values.m_cWnd = &m_cWnd;
+  values.m_highRxAckMark = &m_highRxAckMark;
+  values.m_highRxMark = &m_highRxMark;
+  values.m_highTxMark = &m_highTxMark;
+  values.m_lastRtt = &m_lastRtt;
+  values.m_nextTxSequence = &m_nextTxSequence;
+  values.m_rto = &m_rto;
+  values.m_rWnd = &m_rWnd;
+  values.m_ssThresh = &m_ssThresh;
 
   if (enabled)
     {
@@ -654,7 +648,7 @@ TcpSocketBase::SetMPTCPEnabled (bool enabled)
     }
   else
     {
-      m_implementation = CreateObject <Ns3TcpSocketImpl> ();
+      m_implementation = CreateObject <Ns3TcpImplementation> ();
       m_implementation->SetRtt(DynamicCast<RttEstimator> (rttFactory.Create ()));
       m_implementation->SetCongestionControlAlgorithm(DynamicCast<TcpCongestionOps> (congAlgoFactory.Create()));
       m_implementation->SetTracedValues (values);

@@ -22,6 +22,7 @@
 #include "ns3/node.h"
 #include "ns3/log.h"
 #include "ns3/tcp-westwood.h"
+#include "ns3/simulator.h"
 
 namespace ns3 {
 

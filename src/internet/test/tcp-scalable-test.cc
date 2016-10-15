@@ -68,10 +68,13 @@ TcpScalableIncrementTest::TcpScalableIncrementTest (uint32_t cWnd,
 void
 TcpScalableIncrementTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject<TcpSocketState> ();
   m_state->m_segmentSize = m_segmentSize;
+  m_state->SetTracedValues (tracedValues);
 
   Ptr<TcpScalable> cong = CreateObject <TcpScalable> ();
 
@@ -89,7 +92,7 @@ TcpScalableIncrementTest::DoRun ()
 
   cong->IncreaseWindow (m_state, m_segmentsAcked);
 
-  NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), m_cWnd + delta * m_segmentSize,
+  NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), m_cWnd + delta * m_segmentSize,
                          "CWnd has not increased");
 }
 
@@ -124,8 +127,12 @@ TcpScalableDecrementTest::DoRun ()
 {
   m_state = CreateObject<TcpSocketState> ();
 
-  m_state->m_cWnd = m_cWnd;
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+
   m_state->m_segmentSize = m_segmentSize;
+  m_state->SetTracedValues(tracedValues);
 
   Ptr<TcpScalable> cong = CreateObject <TcpScalable> ();
 
@@ -139,7 +146,7 @@ TcpScalableDecrementTest::DoRun ()
 
   uint32_t ssThresh = std::max (2.0, segCwnd * b);
 
-  uint32_t ssThreshInSegments = cong->GetSsThresh (m_state, m_state->m_cWnd) / m_segmentSize;
+  uint32_t ssThreshInSegments = cong->GetSsThresh (m_state, m_state->GetCwnd()) / m_segmentSize;
 
   NS_TEST_ASSERT_MSG_EQ (ssThreshInSegments, ssThresh,
                          "Scalable decrement fn not used");

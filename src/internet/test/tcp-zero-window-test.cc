@@ -21,6 +21,7 @@
 #include "tcp-error-model.h"
 #include "ns3/node.h"
 #include "ns3/log.h"
+#include "ns3/simulator.h"
 
 namespace ns3 {
 

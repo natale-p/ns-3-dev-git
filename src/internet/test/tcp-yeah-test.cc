@@ -92,11 +92,18 @@ TcpYeahIncrementTest::TcpYeahIncrementTest (uint32_t cWnd,
 void
 TcpYeahIncrementTest::DoRun ()
 {
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  TracedValue<SequenceNumber32> localNextTx = m_nextTxSeq;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_nextTxSequence = &localNextTx;
+  tracedValues.m_ssThresh = &localSsThresh;
+
   Ptr<TcpSocketState> state = CreateObject <TcpSocketState> ();
-  state->m_cWnd = m_cWnd;
-  state->m_ssThresh = m_ssThresh;
+  state->SetTracedValues (tracedValues);
+
   state->m_segmentSize = m_segmentSize;
-  state->m_nextTxSequence = m_nextTxSeq;
   state->m_lastAckedSeq = m_lastAckedSeq;
 
   Ptr<TcpYeah> cong = CreateObject <TcpYeah> ();
@@ -115,7 +122,7 @@ TcpYeahIncrementTest::DoRun ()
   cong->IncreaseWindow (state, m_segmentsAcked);
   IncreaseWindow (cong);
 
-  NS_TEST_ASSERT_MSG_EQ (state->m_cWnd.Get (), m_cWnd,
+  NS_TEST_ASSERT_MSG_EQ (state->GetCwnd (), m_cWnd,
                          "CWnd has not updated correctly");
 }
 
@@ -257,12 +264,16 @@ TcpYeahDecrementTest::TcpYeahDecrementTest (uint32_t cWnd,
 void
 TcpYeahDecrementTest::DoRun ()
 {
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  TracedValue<SequenceNumber32> localNextTx = m_nextTxSeq;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_nextTxSequence = &localNextTx;
+  tracedValues.m_ssThresh = &localSsThresh;
+
   Ptr<TcpSocketState> state = CreateObject <TcpSocketState> ();
-  state->m_cWnd = m_cWnd;
-  state->m_nextTxSequence = m_nextTxSeq;
-  state->m_lastAckedSeq = m_lastAckedSeq;
-  state->m_segmentSize = m_segmentSize;
-  state->m_ssThresh = m_ssThresh;
+  state->SetTracedValues (tracedValues);
 
   Ptr<TcpYeah> cong = CreateObject <TcpYeah> ();
 

@@ -1,7 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2007 Georgia Tech Research Corporation
- * Copyright (c) 2010 Adrian Sai-wah Tam
+ * Copyright (c) 2016 Natale Patriciello <natale.patriciello@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Adrian Sai-wah Tam <adrian.sw.tam@gmail.com>
  */
 #ifndef TCP_SOCKET_BASE_H
 #define TCP_SOCKET_BASE_H
@@ -45,27 +43,108 @@ public:
    */
   static TypeId GetTypeId (void);
 
-  friend class Ns3TcpSocketImpl;
-
   /**
    * \brief Get the instance TypeId
    * \return the instance TypeId
    */
   virtual TypeId GetInstanceTypeId () const;
 
+  TcpSocketBase ();
+  virtual ~TcpSocketBase ();
+
   /**
-   * Create an unbound TCP socket
+   * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
+   *
+   * \param packet the incoming packet
+   * \param header the packet's IPv4 header
+   * \param port the remote port
+   * \param incomingInterface the incoming interface
    */
-  TcpSocketBase (void);
+  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
+                  Ptr<Ipv4Interface> incomingInterface);
 
-  virtual ~TcpSocketBase (void);
+  /**
+   * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
+   *
+   * \param packet the incoming packet
+   * \param header the packet's IPv6 header
+   * \param port the remote port
+   * \param incomingInterface the incoming interface
+   */
+  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
+                   Ptr<Ipv6Interface> incomingInterface);
 
-  // Set associated Node, TcpL4Protocol, RttEstimator to this socket
+  /**
+   * \brief Called by TcpSocketBase::ForwardUp{,6}().
+   *
+   * Get a packet from L3. This is the real function to handle the
+   * incoming packet from lower layers. This is
+   * wrapped by ForwardUp() so that this function can be overloaded by daughter
+   * classes.
+   *
+   * \param packet the incoming packet
+   * \param fromAddress the address of the sender of packet
+   * \param toAddress the address of the receiver of packet (hopefully, us)
+   */
+  void DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
+                    const Address &toAddress);
+
+  /**
+   * \brief Called by the L3 protocol when it received an ICMP packet to pass on to TCP.
+   *
+   * \param icmpSource the ICMP source address
+   * \param icmpTtl the ICMP Time to Live
+   * \param icmpType the ICMP Type
+   * \param icmpCode the ICMP Code
+   * \param icmpInfo the ICMP Info
+   */
+  void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                    uint8_t icmpCode, uint32_t icmpInfo);
+
+  /**
+   * \brief Called by the L3 protocol when it received an ICMPv6 packet to pass on to TCP.
+   *
+   * \param icmpSource the ICMP source address
+   * \param icmpTtl the ICMP Time to Live
+   * \param icmpType the ICMP Type
+   * \param icmpCode the ICMP Code
+   * \param icmpInfo the ICMP Info
+   */
+  void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                     uint8_t icmpCode, uint32_t icmpInfo);
+
+  /**
+   * \brief Kill this socket by zeroing its attributes (IPv4)
+   *
+   * This is a callback function configured to m_endpoint in
+   * SetupCallback(), invoked when the endpoint is destroyed.
+   */
+  void Destroy (void);
+
+  /**
+   * \brief Kill this socket by zeroing its attributes (IPv6)
+   *
+   * This is a callback function configured to m_endpoint in
+   * SetupCallback(), invoked when the endpoint is destroyed.
+   */
+  void Destroy6 (void);
 
   void SetRttTypeId (const TypeId &typeId);
   void SetCongestionTypeId(const TypeId &typeId);
   void SetNode (const Ptr<Node> &node);
   void SetL4Protocol (const Ptr<TcpL4Protocol> &l4Protocol);
+
+
+  /**
+   * TracedCallback signature for tcp packet transmission or reception events.
+   *
+   * \param [in] packet The packet.
+   * \param [in] ipv4
+   * \param [in] interface
+   */
+  typedef void (* TcpTxRxTracedCallback)(const Ptr<const Packet> packet, const TcpHeader& header,
+                                         const Ptr<const TcpSocketBase> socket);
+
 
   // Necessary implementations of null functions from ns3::Socket
   virtual enum SocketErrno GetErrno (void) const;    // returns m_errno
@@ -88,16 +167,6 @@ public:
   virtual int GetSockName (Address &address) const; // Return local addr:port in address
   virtual int GetPeerName (Address &address) const;
   virtual void BindToNetDevice (Ptr<NetDevice> netdevice); // NetDevice with my m_endPoint
-
-  /**
-   * TracedCallback signature for tcp packet transmission or reception events.
-   *
-   * \param [in] packet The packet.
-   * \param [in] ipv4
-   * \param [in] interface
-   */
-  typedef void (* TcpTxRxTracedCallback)(const Ptr<const Packet> packet, const TcpHeader& header,
-                                         const Ptr<const TcpSocketBase> socket);
 
 protected:
   // Implementing ns3::TcpSocket -- Attribute get/set
@@ -190,83 +259,6 @@ private:
    */
   Ptr<TcpRxBuffer> GetRxBuffer (void) const;
 
-  /**
-   * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
-   *
-   * \param packet the incoming packet
-   * \param header the packet's IPv4 header
-   * \param port the remote port
-   * \param incomingInterface the incoming interface
-   */
-  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
-                  Ptr<Ipv4Interface> incomingInterface);
-
-  /**
-   * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
-   *
-   * \param packet the incoming packet
-   * \param header the packet's IPv6 header
-   * \param port the remote port
-   * \param incomingInterface the incoming interface
-   */
-  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
-                   Ptr<Ipv6Interface> incomingInterface);
-
-  /**
-   * \brief Called by TcpSocketBase::ForwardUp{,6}().
-   *
-   * Get a packet from L3. This is the real function to handle the
-   * incoming packet from lower layers. This is
-   * wrapped by ForwardUp() so that this function can be overloaded by daughter
-   * classes.
-   *
-   * \param packet the incoming packet
-   * \param fromAddress the address of the sender of packet
-   * \param toAddress the address of the receiver of packet (hopefully, us)
-   */
-  void DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
-                    const Address &toAddress);
-
-  /**
-   * \brief Called by the L3 protocol when it received an ICMP packet to pass on to TCP.
-   *
-   * \param icmpSource the ICMP source address
-   * \param icmpTtl the ICMP Time to Live
-   * \param icmpType the ICMP Type
-   * \param icmpCode the ICMP Code
-   * \param icmpInfo the ICMP Info
-   */
-  void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                    uint8_t icmpCode, uint32_t icmpInfo);
-
-  /**
-   * \brief Called by the L3 protocol when it received an ICMPv6 packet to pass on to TCP.
-   *
-   * \param icmpSource the ICMP source address
-   * \param icmpTtl the ICMP Time to Live
-   * \param icmpType the ICMP Type
-   * \param icmpCode the ICMP Code
-   * \param icmpInfo the ICMP Info
-   */
-  void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                     uint8_t icmpCode, uint32_t icmpInfo);
-
-  /**
-   * \brief Kill this socket by zeroing its attributes (IPv4)
-   *
-   * This is a callback function configured to m_endpoint in
-   * SetupCallback(), invoked when the endpoint is destroyed.
-   */
-  void Destroy (void);
-
-  /**
-   * \brief Kill this socket by zeroing its attributes (IPv6)
-   *
-   * This is a callback function configured to m_endpoint in
-   * SetupCallback(), invoked when the endpoint is destroyed.
-   */
-  void Destroy6 (void);
-
 private:
   Ptr<TcpImplementation> m_implementation;
   // Connections to other layers of TCP/IP
@@ -289,8 +281,11 @@ private:
   TracedValue<SequenceNumber32> m_nextTxSequence; //!< Next seqnum to be sent (SND.NXT), ReTx pushes it back
 
   // The following two traces pass a packet with a TCP header
-  TcpTracedValues::TcpPktTraceCb m_txTrace; //!< Trace of transmitted packets
-  TcpTracedValues::TcpPktTraceCb m_rxTrace; //!< Trace of received packets
+  TracedCallback<Ptr<const Packet>, const TcpHeader&,
+                 Ptr<const TcpSocketBase> > m_txTrace; //!< Trace of transmitted packets
+
+  TracedCallback<Ptr<const Packet>, const TcpHeader&,
+                 Ptr<const TcpSocketBase> > m_rxTrace; //!< Trace of received packets
 };
 
 } // namespace ns3

@@ -21,8 +21,13 @@
 
 #include "ns3/simple-net-device.h"
 #include "ns3/error-model.h"
+#include "ns3/ns3-tcp-socket-impl.h"
 #include "ns3/tcp-socket-base.h"
 #include "ns3/tcp-congestion-ops.h"
+#include "ns3/rtt-estimator.h"
+#include "ns3/tcp-rx-buffer.h"
+#include "ns3/tcp-tx-buffer.h"
+#include "ns3/tcp-l4-protocol.h"
 #include "ns3/test.h"
 
 namespace ns3 {
@@ -43,16 +48,16 @@ namespace ns3 {
  * \see SetProcessedAckCb
  * \see SetRetransmitCb
  */
-class TcpSocketMsgBase : public TcpSocketBase
+class TcpSocketMsgBase : public Ns3TcpSocketImpl
 {
 public:
   static TypeId GetTypeId (void);
 
-  TcpSocketMsgBase () : TcpSocketBase ()
+  TcpSocketMsgBase () : Ns3TcpSocketImpl ()
   {
   }
 
-  TcpSocketMsgBase (const TcpSocketMsgBase &other) : TcpSocketBase (other)
+  TcpSocketMsgBase (const TcpSocketMsgBase &other) : Ns3TcpSocketImpl (other)
   {
     m_rcvAckCb = other.m_rcvAckCb;
     m_processedAckCb = other.m_processedAckCb;

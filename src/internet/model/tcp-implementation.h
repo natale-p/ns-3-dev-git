@@ -33,9 +33,60 @@ class TcpSocketBase;
 class TcpCongestionOps;
 class TcpTxBuffer;
 class TcpRxBuffer;
+class TcpHeader;
 
-struct TcpTracedValues
+class TcpTracedValues
 {
+public:
+  typedef TracedCallback<Ptr<const Packet>, const TcpHeader&, Ptr<const TcpSocketBase> > TcpPktTraceCb;
+
+  Time GetRto () const;
+  void SetRtoPointer (TracedValue<Time> *rto);
+  void SetRto (const Time &rto);
+
+  Time GetLastRtt () const;
+  void SetLastRttPointer (TracedValue<Time> *lastRtt);
+  void SetLastRtt (const Time &lastRtt);
+
+  uint32_t GetRWnd () const;
+  void SetRWndPointer (TracedValue<uint32_t> *rWnd);
+  void SetRwnd (uint32_t rWnd);
+
+  SequenceNumber32 GetHighRxMark () const;
+  void SetHighRxMarkPointer (TracedValue<SequenceNumber32> *highRxMark);
+  void SetHighRxMark (const SequenceNumber32 &highRxMark);
+
+  SequenceNumber32 GetHighRxAckMark () const;
+  void SetHighRxAckMarkPointer (TracedValue<SequenceNumber32> *highRxAckMark);
+  void SetHighRxAckMark (const SequenceNumber32 &highRxAckMark);
+
+  uint32_t GetBytesInFlight () const;
+  void SetBytesInFlightPointer (TracedValue<uint32_t> *bytesInFlight);
+  void SetBytesInFlight (uint32_t bytesInFlight);
+
+  uint32_t GetCWnd () const;
+  void SetCWndPointer (TracedValue<uint32_t> *cWnd);
+  void SetCwnd (uint32_t cWnd);
+
+  uint32_t GetSSThresh () const;
+  void SetSSThreshPointer (TracedValue<uint32_t> *ssThresh);
+  void SetSSThresh (uint32_t ssThresh);
+
+  SequenceNumber32 GetHighTxMark () const;
+  void SetHighTxMarkPointer (TracedValue<SequenceNumber32> *highTxMark);
+  void SetHighTxMark (const SequenceNumber32 &highTxMark);
+
+  SequenceNumber32 GetNextTxSequence () const;
+  void SetNextTxSequencePointer (TracedValue<SequenceNumber32> *nextTxSequence);
+  void SetNextTxSequence (const SequenceNumber32 &nextTxSequence);
+
+  void SetTxTracePointer (TcpPktTraceCb *txTrace);
+  void SetRxTracePointer (TcpPktTraceCb *rxTrace);
+
+  void TxTrace (Ptr<const Packet>, const TcpHeader&, Ptr<const TcpSocketBase>);
+  void RxTrace (Ptr<const Packet>, const TcpHeader&, Ptr<const TcpSocketBase>);
+
+private:
   TracedValue<Time> *m_rto;             //!< Retransmit timeout
   TracedValue<Time> *m_lastRtt;         //!< Last RTT sample collected
   TracedValue<uint32_t> *m_rWnd;        //!< Receiver window (RCV.WND in RFC793)
@@ -46,6 +97,8 @@ struct TcpTracedValues
   TracedValue<uint32_t>  *m_ssThresh;        //!< Slow start threshold
   TracedValue<SequenceNumber32> *m_highTxMark; //!< Highest seqno ever sent, regardless of ReTx
   TracedValue<SequenceNumber32> *m_nextTxSequence; //!< Next seqnum to be sent (SND.NXT), ReTx pushes it back
+  TcpPktTraceCb *m_txTrace;
+  TcpPktTraceCb *m_rxTrace;
 };
 
 class TcpImplementation : public Object

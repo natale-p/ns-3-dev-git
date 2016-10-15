@@ -22,6 +22,7 @@
 #include "ns3/tcp-congestion-ops.h"
 #include "ns3/tcp-socket-base.h"
 #include "ns3/tcp-bic.h"
+#include "ns3/simulator.h"
 
 namespace ns3 {
 
@@ -71,11 +72,16 @@ TcpBicIncrementTest::TcpBicIncrementTest (uint32_t cWnd,
 void
 TcpBicIncrementTest::DoRun ()
 {
+  static TracedValue<uint32_t> localCwnd = m_cWnd;
+  static TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_ssThresh = &localSsThresh;
+
   m_state = CreateObject<TcpSocketState> ();
 
-  m_state->m_cWnd = m_cWnd;
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
-  m_state->m_ssThresh = m_ssThresh;
 
   Simulator::Schedule (Seconds (0.0), &TcpBicIncrementTest::ExecuteTest, this);
   Simulator::Run ();
@@ -91,14 +97,14 @@ TcpBicIncrementTest::ExecuteTest ()
 
   if (m_segmentsAcked > ackCnt)
     {
-      NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), segCwnd * m_segmentSize + m_segmentSize,
+      NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), segCwnd * m_segmentSize + m_segmentSize,
                              "Bic has not increment cWnd");
       /*  NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), 27000,
                                "Bic has not increment cWnd");*/
     }
   else
     {
-      NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), segCwnd * m_segmentSize,
+      NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), segCwnd * m_segmentSize,
                              "Bic has modified cWnd");
     }
 }
@@ -106,7 +112,7 @@ TcpBicIncrementTest::ExecuteTest ()
 uint32_t
 TcpBicIncrementTest::Update (Ptr<TcpSocketState> tcb)
 {
-  uint32_t segCwnd = tcb->m_cWnd / tcb->m_segmentSize;
+  uint32_t segCwnd = tcb->GetCwnd () / tcb->m_segmentSize;
   Ptr<TcpBic> cong = CreateObject <TcpBic> ();
   cong->m_lastMaxCwnd = m_lastMaxCwnd;
   UintegerValue lowWindow, bsCoeff, wMax;
@@ -205,9 +211,13 @@ TcpBicDecrementTest::TcpBicDecrementTest (uint32_t cWnd,
 void
 TcpBicDecrementTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  static TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
+
   m_state->m_segmentSize = m_segmentSize;
 
   Simulator::Schedule (Seconds (0.0), &TcpBicDecrementTest::ExecuteTest, this);
@@ -223,7 +233,7 @@ TcpBicDecrementTest::ExecuteTest ()
   cong->SetAttribute ("FastConvergence", m_fastConvergence);
 
   uint32_t segCwnd = m_cWnd / m_segmentSize;
-  uint32_t retSsThresh = cong->GetSsThresh (m_state, m_state->m_cWnd);
+  uint32_t retSsThresh = cong->GetSsThresh (m_state, m_state->GetCwnd ());
   uint32_t retLastMaxCwnd = cong->m_lastMaxCwnd;
 
   DoubleValue beta;

@@ -157,6 +157,11 @@ public:
     return m_tracedValues.m_nextTxSequence->Get ();
   }
 
+  SequenceNumber32 GetHighTxMark () const
+  {
+    return m_tracedValues.m_highTxMark->Get ();
+  }
+
   void SetCwnd (uint32_t cWnd)
   {
     *m_tracedValues.m_cWnd = cWnd;

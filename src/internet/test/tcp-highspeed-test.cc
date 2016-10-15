@@ -56,9 +56,12 @@ TcpHighSpeedIncrementTest::TcpHighSpeedIncrementTest (uint32_t cWnd,
 void
 TcpHighSpeedIncrementTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
 
   Ptr<TcpHighSpeed> cong = CreateObject <TcpHighSpeed> ();
@@ -71,7 +74,7 @@ TcpHighSpeedIncrementTest::DoRun ()
 
   cong->IncreaseWindow (m_state, (segCwnd / coeffA) + 1);
 
-  NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), m_cWnd + m_segmentSize,
+  NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), m_cWnd + m_segmentSize,
                          "CWnd has not increased");
 }
 
@@ -104,9 +107,12 @@ TcpHighSpeedDecrementTest::TcpHighSpeedDecrementTest (uint32_t cWnd,
 void
 TcpHighSpeedDecrementTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
 
-  m_state->m_cWnd = m_cWnd;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
 
   Ptr<TcpHighSpeed> cong = CreateObject <TcpHighSpeed> ();
@@ -114,7 +120,7 @@ TcpHighSpeedDecrementTest::DoRun ()
   uint32_t segCwnd = m_cWnd / m_segmentSize;
   double coeffB = 1.0 - TcpHighSpeed::TableLookupB (segCwnd);
 
-  uint32_t ret = cong->GetSsThresh (m_state, m_state->m_cWnd);
+  uint32_t ret = cong->GetSsThresh (m_state, m_state->GetCwnd ());
 
   uint32_t ssThHS = std::max (2.0, segCwnd * coeffB);
 

@@ -30,6 +30,7 @@
 #include "ns3/tcp-congestion-ops.h"
 #include "ns3/tcp-socket-base.h"
 #include "ns3/tcp-htcp.h"
+#include "ns3/simulator.h"
 
 namespace ns3 {
 
@@ -83,9 +84,12 @@ TcpHtcpIncrementTest::DoRun ()
 {
   NS_LOG_FUNCTION (this);
   m_state = CreateObject<TcpSocketState> ();
+  static TracedValue<uint32_t> localCwnd = m_cWnd;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
 
-  m_state->m_cWnd = m_cWnd;
   m_state->m_segmentSize = m_segmentSize;
+  m_state->SetTracedValues (tracedValues);
 
   Ptr<TcpHtcp> cong = CreateObject<TcpHtcp> ();
   Time lastCongestion;
@@ -93,7 +97,7 @@ TcpHtcpIncrementTest::DoRun ()
   NS_LOG_DEBUG ("m_cWnd: " << m_cWnd << " m_segmentSize: " << m_segmentSize <<
                 " m_segmentsAcked: " << m_segmentsAcked << " m_lastCongestion" << m_lastCongestion);
   Simulator::Schedule (Time (m_lastCongestion), &TcpHtcp::GetSsThresh, cong,
-                       m_state, m_state->m_cWnd);
+                       m_state, m_state->GetCwnd ());
   lastCongestion = m_lastCongestion;
   Simulator::Schedule (Time (m_firstAck), &TcpHtcp::PktsAcked, cong, m_state,
                        m_segmentsAcked, Time (ns3::MilliSeconds (80)));
@@ -104,9 +108,9 @@ TcpHtcpIncrementTest::DoRun ()
   NS_LOG_DEBUG ("Simulation ran for the scheduled events");
 
   cong->IncreaseWindow (m_state, m_segmentsAcked);
-  NS_LOG_DEBUG ( "m_cwnd from function: " << m_state->m_cWnd << " expected cWnd calculated: " << m_expectedCwnd);
+  NS_LOG_DEBUG ( "m_cwnd from function: " << m_state->GetCwnd () << " expected cWnd calculated: " << m_expectedCwnd);
 
-  NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), m_expectedCwnd,
+  NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), m_expectedCwnd,
                          "CWnd has not updated correctly");
 
   Simulator::Destroy ();

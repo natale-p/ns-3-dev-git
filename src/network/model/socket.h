@@ -983,6 +983,27 @@ public:
    */
   virtual void Ipv6LeaveGroup (void);
 
+  /**
+   * \brief Checks if the socket has a specific IPv6 Tclass set
+   *
+   * \returns true if the socket has a IPv6 Tclass set, false otherwise.
+   */
+  bool IsManualIpv6Tclass (void) const;
+
+  /**
+   * \brief Checks if the socket has a specific IPv4 TTL set
+   *
+   * \returns true if the socket has a IPv4 TTL set, false otherwise.
+   */
+  bool IsManualIpTtl (void) const;
+
+  /**
+   * \brief Checks if the socket has a specific IPv6 Hop Limit set
+   *
+   * \returns true if the socket has a IPv6 Hop Limit set, false otherwise.
+   */
+  bool IsManualIpv6HopLimit (void) const;
+
 protected:
   /**
    * \brief Notify through the callback (if set) that the connection has been
@@ -1048,27 +1069,6 @@ protected:
 
   // inherited function, no doc necessary
   virtual void DoDispose (void);
-
-  /**
-   * \brief Checks if the socket has a specific IPv6 Tclass set
-   *
-   * \returns true if the socket has a IPv6 Tclass set, false otherwise.
-   */
-  bool IsManualIpv6Tclass (void) const;
-
-  /**
-   * \brief Checks if the socket has a specific IPv4 TTL set
-   *
-   * \returns true if the socket has a IPv4 TTL set, false otherwise.
-   */
-  bool IsManualIpTtl (void) const;
-
-  /**
-   * \brief Checks if the socket has a specific IPv6 Hop Limit set
-   *
-   * \returns true if the socket has a IPv6 Hop Limit set, false otherwise.
-   */
-  bool IsManualIpv6HopLimit (void) const;
 
   Ptr<NetDevice> m_boundnetdevice; //!< the device this socket is bound to (might be null).
   bool m_recvPktInfo; //!< if the socket should add packet info tags to the packet forwarded to L4.

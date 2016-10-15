@@ -70,10 +70,14 @@ TcpHyblaIncrementTest::RhoUpdated (double oldVal, double newVal)
 void
 TcpHyblaIncrementTest::DoRun ()
 {
-  m_state = CreateObject<TcpSocketState> ();
+  TracedValue<uint32_t> localCwnd = m_cWnd;
+  TracedValue<uint32_t> localSsThresh = m_ssThresh;
+  StateTracedValues tracedValues;
+  tracedValues.m_cWnd = &localCwnd;
+  tracedValues.m_ssThresh = &localSsThresh;
 
-  m_state->m_cWnd = m_cWnd;
-  m_state->m_ssThresh = m_ssThresh;
+  m_state = CreateObject <TcpSocketState> ();
+  m_state->SetTracedValues (tracedValues);
   m_state->m_segmentSize = m_segmentSize;
 
   Ptr<TcpHybla> cong = CreateObject <TcpHybla> ();
@@ -102,9 +106,9 @@ TcpHyblaIncrementTest::DoRun ()
       // We expect an increment of 2^rho - 1, which does not go beyond ssThresh
       double inc = std::pow (2, calcRho) - 1.0;
       uint32_t cWndExpected = m_cWnd + (inc * m_segmentSize);
-      NS_TEST_ASSERT_MSG_LT_OR_EQ (m_state->m_cWnd.Get (), m_state->m_ssThresh.Get (),
+      NS_TEST_ASSERT_MSG_LT_OR_EQ (m_state->GetCwnd (), m_state->GetSsThresh (),
                                    "Congestion window has gone too far");
-      NS_TEST_ASSERT_MSG_EQ (m_state->m_cWnd.Get (), cWndExpected,
+      NS_TEST_ASSERT_MSG_EQ (m_state->GetCwnd (), cWndExpected,
                              "Congestion window different than expected");
     }
   else
@@ -117,7 +121,7 @@ TcpHyblaIncrementTest::DoRun ()
       if (inc >= 1.0)
         {
           // LT because implementation does not add value less than MSS.
-          NS_TEST_ASSERT_MSG_LT_OR_EQ (m_state->m_cWnd.Get (), cWndExpected,
+          NS_TEST_ASSERT_MSG_LT_OR_EQ (m_state->GetCwnd (), cWndExpected,
                                        "Congestion window different than expected");
         }
     }

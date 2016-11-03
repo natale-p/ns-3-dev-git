@@ -1252,7 +1252,7 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
 
       if (tcpHeader.HasOption (TcpOption::SACKPERMITTED) && m_sackEnabled)
         {
-          ProcessOptionSACKPermitted (tcpHeader.GetOption (TcpOption::SACKPERMITTED));
+          ProcessOptionSackPermitted (tcpHeader.GetOption (TcpOption::SACKPERMITTED));
         }
       else
         {
@@ -1308,13 +1308,13 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
           && m_tcb->m_congState != TcpSocketState::CA_LOSS
           && !m_persistEvent.IsRunning ())
         {
-          // Emulate SACK for (old) dupack definition.
+          // Emulate sack for (old) dupack definition.
           // Don't generate block for the persistent window probe
-          // Don't include the ACK number in any SACK block
+          // Don't include the ACK number in any sack block
           if (tcpHeader.GetAckNumber () == m_txBuffer->HeadSequence ()
               && tcpHeader.GetAckNumber () < m_tcb->m_nextTxSequence)
             {
-              // Dupack following old ns-3 behavior. Craft a special SACK option.
+              // Dupack following old ns-3 behavior. Craft a special sack option.
               uint8_t available = tcpHeader.GetMaxOptionLength () - tcpHeader.GetOptionLength ();
               Ptr<const TcpOptionSack> sackBlock = m_txBuffer->CraftSackOption (tcpHeader.GetAckNumber (), available);
               if (sackBlock != 0)
@@ -1511,7 +1511,7 @@ TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated)
       switch (option->GetKind ())
         {
         case TcpOption::SACK:
-          scoreboardUpdated = ProcessOptionSACK (option);
+          scoreboardUpdated = ProcessOptionSack (option);
           break;
         default:
           continue;
@@ -1641,7 +1641,7 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
   NS_ASSERT (m_tcb->m_segmentSize > 0);
 
   // RFC 6675, Section 5, 1st paragraph:
-  // Upon the receipt of any ACK containing SACK information, the
+  // Upon the receipt of any ACK containing sack information, the
   // scoreboard MUST be updated via the Update () routine (done in ReadOptions)
   bool scoreboardUpdated = false;
   ReadOptions (tcpHeader, scoreboardUpdated);
@@ -2403,7 +2403,7 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
 
       if (m_sackEnabled)
         {
-          AddOptionSACKPermitted (header);
+          AddOptionSackPermitted (header);
         }
 
       if (m_synCount == 0)
@@ -2445,7 +2445,7 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
         {
           if (m_sackEnabled)
             {
-              AddOptionSACK (header);
+              AddOptionSack (header);
             }
         }
     }
@@ -2947,7 +2947,7 @@ TcpSocketBase::AvailableWindow () const
       return 0;
     }
 
-  NS_LOG_DEBUG ("InFlight=" << inflight << ", Win=" << win << " availWin=" << win-inflight);
+  NS_LOG_DEBUG ("InFlight=" << inflight << ", Win=" << win << " availWin=" << win - inflight);
   return win - inflight;
 }
 
@@ -3597,7 +3597,7 @@ TcpSocketBase::AddOptionWScale (TcpHeader &header)
 }
 
 bool
-TcpSocketBase::ProcessOptionSACK (const Ptr<const TcpOption> option)
+TcpSocketBase::ProcessOptionSack (const Ptr<const TcpOption> option)
 {
   NS_LOG_FUNCTION (this << option);
 
@@ -3607,7 +3607,7 @@ TcpSocketBase::ProcessOptionSACK (const Ptr<const TcpOption> option)
 }
 
 void
-TcpSocketBase::ProcessOptionSACKPermitted (const Ptr<const TcpOption> option)
+TcpSocketBase::ProcessOptionSackPermitted (const Ptr<const TcpOption> option)
 {
   NS_LOG_FUNCTION (this << option);
 
@@ -3618,7 +3618,7 @@ TcpSocketBase::ProcessOptionSACKPermitted (const Ptr<const TcpOption> option)
 }
 
 void
-TcpSocketBase::AddOptionSACKPermitted (TcpHeader &header)
+TcpSocketBase::AddOptionSackPermitted (TcpHeader &header)
 {
   NS_LOG_FUNCTION (this << header);
   NS_ASSERT (header.GetFlags () & TcpHeader::SYN);
@@ -3629,11 +3629,11 @@ TcpSocketBase::AddOptionSACKPermitted (TcpHeader &header)
 }
 
 void
-TcpSocketBase::AddOptionSACK (TcpHeader& header)
+TcpSocketBase::AddOptionSack (TcpHeader& header)
 {
   NS_LOG_FUNCTION (this << header);
 
-  // Calculate the number of SACK blocks allowed in this packet
+  // Calculate the number of sack blocks allowed in this packet
   uint8_t optionLenAvail = header.GetMaxOptionLength () - header.GetOptionLength ();
   uint8_t allowedSackBlocks = (optionLenAvail - 2) / 8;
 
@@ -3644,7 +3644,7 @@ TcpSocketBase::AddOptionSACK (TcpHeader& header)
       return;
     }
 
-  // Append the allowed number of SACK blocks
+  // Append the allowed number of sack blocks
   Ptr<TcpOptionSack> option = CreateObject<TcpOptionSack> ();
   TcpOptionSack::SackList::iterator i;
   for (i = sackList.begin (); allowedSackBlocks > 0 && i != sackList.end (); ++i)
@@ -3655,7 +3655,7 @@ TcpSocketBase::AddOptionSACK (TcpHeader& header)
     }
 
   header.AppendOption (option);
-  NS_LOG_INFO (m_node->GetId () << " Add option SACK");
+  NS_LOG_INFO (m_node->GetId () << " Add option sack");
 }
 
 void
@@ -3823,7 +3823,7 @@ TcpSocketBase::SafeSubtraction (uint32_t a, uint32_t b)
 {
   if (a > b)
     {
-      return a-b;
+      return a - b;
     }
 
   return 0;

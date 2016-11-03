@@ -126,12 +126,12 @@ public:
     CA_OPEN,      /**< Normal state, no dubious events */
     CA_DISORDER,  /**< In all the respects it is "Open",
                     *  but requires a bit more attention. It is entered when
-                    *  we see some SACKs or dupacks. It is split of "Open" */
+                    *  we see some Sacks or dupacks. It is split of "Open" */
     CA_CWR,       /**< cWnd was reduced due to some Congestion Notification event.
                     *  It can be ECN, ICMP source quench, local device congestion.
                     *  Not used in NS-3 right now. */
     CA_RECOVERY,  /**< CWND was reduced, we are fast-retransmitting. */
-    CA_LOSS,      /**< CWND was reduced due to RTO timeout or SACK reneging. */
+    CA_LOSS,      /**< CWND was reduced due to RTO timeout or sack reneging. */
     CA_LAST_STATE /**< Used only in debug messages */
   } TcpCongState_t;
 
@@ -1000,35 +1000,35 @@ protected:
   uint8_t CalculateWScale () const;
 
   /**
-   * \brief Read the SACK PERMITTED option
+   * \brief Read the sack permitted option
    *
    * Currently this is a placeholder, since no operations should be done
    * on such option.
    *
-   * \param SACK PERMITTED option from the header
+   * \param sack permitted option from the header
    */
-  void ProcessOptionSACKPermitted (const Ptr<const TcpOption> option);
+  void ProcessOptionSackPermitted (const Ptr<const TcpOption> option);
 
   /**
-   * \brief Read the SACK option
+   * \brief Read the sack option
    *
-   * \param SACK option from the header
+   * \param sack option from the header
    */
-  bool ProcessOptionSACK (const Ptr<const TcpOption> option);
+  bool ProcessOptionSack (const Ptr<const TcpOption> option);
 
   /**
-   * \brief Add the SACK PERMITTED option to the header
-   *
-   * \param header TcpHeader where the method should add the option
-   */
-  void AddOptionSACKPermitted (TcpHeader &header);
-
-  /**
-   * \brief Add the SACK option to the header
+   * \brief Add the sack permitted option to the header
    *
    * \param header TcpHeader where the method should add the option
    */
-  void AddOptionSACK (TcpHeader& header);
+  void AddOptionSackPermitted (TcpHeader &header);
+
+  /**
+   * \brief Add the sack option to the header
+   *
+   * \param header TcpHeader where the method should add the option
+   */
+  void AddOptionSack (TcpHeader& header);
 
   /** \brief Process the timestamp option from other side
    *
@@ -1121,7 +1121,7 @@ protected:
   TracedValue<uint32_t>         m_bytesInFlight; //!< Bytes in flight
 
   // Options
-  bool    m_sackEnabled;       //!< RFC SACK option enabled
+  bool    m_sackEnabled;       //!< RFC Sack option enabled
   bool    m_winScalingEnabled; //!< Window Scale option enabled (RFC 7323)
   uint8_t m_rcvWindShift;      //!< Window shift to apply to outgoing segments
   uint8_t m_sndWindShift;      //!< Window shift to apply to incoming segments

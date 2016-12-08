@@ -114,6 +114,7 @@ void PacketSink::StartApplication ()    // Called at time specified by Start
   if (!m_socket)
     {
       m_socket = Socket::CreateSocket (GetNode (), m_tid);
+      m_socketCreated (m_socket);
       m_socket->Bind (m_local);
       m_socket->Listen ();
       m_socket->ShutdownSend ();

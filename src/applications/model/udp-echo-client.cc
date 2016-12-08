@@ -125,6 +125,7 @@ UdpEchoClient::StartApplication (void)
     {
       TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
+      m_socketCreated (m_socket);
       if (Ipv4Address::IsMatchingType(m_peerAddress) == true)
         {
           m_socket->Bind();

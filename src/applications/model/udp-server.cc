@@ -119,6 +119,7 @@ UdpServer::StartApplication (void)
     {
       TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
+      m_socketCreated (m_socket);
       InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (),
                                                    m_port);
       m_socket->Bind (local);

@@ -118,6 +118,7 @@ void BulkSendApplication::StartApplication (void) // Called at time specified by
   if (!m_socket)
     {
       m_socket = Socket::CreateSocket (GetNode (), m_tid);
+      m_socketCreated (m_socket);
 
       // Fatal error if socket type is not NS3_SOCK_STREAM or NS3_SOCK_SEQPACKET
       if (m_socket->GetSocketType () != Socket::NS3_SOCK_STREAM &&

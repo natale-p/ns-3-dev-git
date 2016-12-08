@@ -268,9 +268,11 @@ public:
    * \param seq Next sequence number to transmit, based on the scoreboard information
    * \param dupThresh dupAck threshold
    * \param segmentSize segment size
+   * \param isRecovery true if the socket congestion state is in recovery mode
    * \return true is seq is updated, false otherwise
    */
-  bool NextSeg (SequenceNumber32 *seq, uint32_t dupThresh, uint32_t segmentSize) const;
+  bool NextSeg (SequenceNumber32 *seq, uint32_t dupThresh, uint32_t segmentSize,
+                bool isRecovery) const;
 
   /**
    * \brief Return total bytes in flight

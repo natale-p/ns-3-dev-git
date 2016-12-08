@@ -917,7 +917,7 @@ TcpTxBuffer::IsLost (const SequenceNumber32 &seq, uint32_t dupThresh,
 
 bool
 TcpTxBuffer::NextSeg (SequenceNumber32 *seq, uint32_t dupThresh,
-                      uint32_t segmentSize) const
+                      uint32_t segmentSize, bool isRecovery) const
 {
   NS_LOG_FUNCTION (this);
 
@@ -953,7 +953,7 @@ TcpTxBuffer::NextSeg (SequenceNumber32 *seq, uint32_t dupThresh,
               *seq = beginOfCurrentPkt;
               return true;
             }
-          else if (seqPerRule3.GetValue () == 0)
+          else if (seqPerRule3.GetValue () == 0 && isRecovery)
             {
               isSeqPerRule3Valid = true;
               seqPerRule3 = beginOfCurrentPkt;

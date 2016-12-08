@@ -49,6 +49,10 @@ Application::GetTypeId (void)
                    TimeValue (TimeStep (0)),
                    MakeTimeAccessor (&Application::m_stopTime),
                    MakeTimeChecker ())
+    .AddTraceSource ("SocketCreated",
+                     "A Socket has been created",
+                     MakeTraceSourceAccessor (&Application::m_socketCreated),
+                     "ns3::Application::ApplicationSocketCreated")
   ;
   return tid;
 }

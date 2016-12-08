@@ -26,6 +26,8 @@
 #include "ns3/object.h"
 #include "ns3/ptr.h"
 #include "ns3/node.h"
+#include "ns3/traced-callback.h"
+#include "ns3/socket.h"
 
 namespace ns3 {
 
@@ -104,6 +106,13 @@ public:
    */
   void SetNode (Ptr<Node> node);
 
+  /**
+   * TracedCallback signature for socket creation
+   *
+   * \param [in] socket The socket created
+   */
+  typedef void (* ApplicationSocketCreated)(const Ptr<const Socket> socket);
+
 private:
   /**
    * \brief Application specific startup code
@@ -131,6 +140,8 @@ protected:
   Time m_stopTime;          //!< The simulation time that the application will end
   EventId m_startEvent;     //!< The event that will fire at m_startTime to start the application
   EventId m_stopEvent;      //!< The event that will fire at m_stopTime to end the application
+
+  TracedCallback<Ptr<const Socket> > m_socketCreated; //!< TracedCallback for socket creation
 };
 
 } // namespace ns3

@@ -296,7 +296,7 @@ ObjectBase::GetAttributeFailSafe (std::string name, AttributeValue &value) const
 }
 
 bool 
-ObjectBase::TraceConnectWithoutContext (std::string name, const CallbackBase &cb)
+ObjectBase::TraceConnectWithoutContext (std::string name, const CallbackBase &cb) const
 {
   NS_LOG_FUNCTION (this << name << &cb);
   TypeId tid = GetInstanceTypeId ();
@@ -309,7 +309,7 @@ ObjectBase::TraceConnectWithoutContext (std::string name, const CallbackBase &cb
   return ok;
 }
 bool 
-ObjectBase::TraceConnect (std::string name, std::string context, const CallbackBase &cb)
+ObjectBase::TraceConnect (std::string name, std::string context, const CallbackBase &cb) const
 {
   NS_LOG_FUNCTION (this << name << context << &cb);
   TypeId tid = GetInstanceTypeId ();
@@ -322,7 +322,7 @@ ObjectBase::TraceConnect (std::string name, std::string context, const CallbackB
   return ok;
 }
 bool 
-ObjectBase::TraceDisconnectWithoutContext (std::string name, const CallbackBase &cb)
+ObjectBase::TraceDisconnectWithoutContext (std::string name, const CallbackBase &cb) const
 {
   NS_LOG_FUNCTION (this << name << &cb);
   TypeId tid = GetInstanceTypeId ();
@@ -335,7 +335,7 @@ ObjectBase::TraceDisconnectWithoutContext (std::string name, const CallbackBase 
   return ok;
 }
 bool 
-ObjectBase::TraceDisconnect (std::string name, std::string context, const CallbackBase &cb)
+ObjectBase::TraceDisconnect (std::string name, std::string context, const CallbackBase &cb) const
 {
   NS_LOG_FUNCTION (this << name << context << &cb);
   TypeId tid = GetInstanceTypeId ();

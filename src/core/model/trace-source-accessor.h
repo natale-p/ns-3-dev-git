@@ -59,7 +59,7 @@ public:
    * \return \c true unless the connection could not be made, typically because
    *         the \c obj couldn't be cast to the correct type.
    */
-  virtual bool ConnectWithoutContext (ObjectBase *obj, const CallbackBase &cb) const = 0;
+  virtual bool ConnectWithoutContext (const ObjectBase *obj, const CallbackBase &cb) const = 0;
   /**
    * Connect a Callback to a TraceSource with a context string.
    *
@@ -72,7 +72,7 @@ public:
    * \return \c true unless the connection could not be made, typically because
    *         the \c obj couldn't be cast to the correct type.
    */
-  virtual bool Connect (ObjectBase *obj, std::string context, const CallbackBase &cb) const = 0;
+  virtual bool Connect (const ObjectBase *obj, std::string context, const CallbackBase &cb) const = 0;
   /**
    * Disconnect a Callback from a TraceSource (without context).
    *
@@ -81,7 +81,7 @@ public:
    * \return \c true unless the connection could not be made, typically because
    *         the \c obj couldn't be cast to the correct type.
    */
-  virtual bool DisconnectWithoutContext (ObjectBase *obj, const CallbackBase &cb) const = 0;
+  virtual bool DisconnectWithoutContext (const ObjectBase *obj, const CallbackBase &cb) const = 0;
   /**
    * Disconnect a Callback from a TraceSource with a context string.
    *
@@ -94,7 +94,7 @@ public:
    * \return \c true unless the connection could not be made, typically because
    *         the \c obj couldn't be cast to the correct type.
    */
-  virtual bool Disconnect (ObjectBase *obj, std::string context, const CallbackBase &cb) const = 0;
+  virtual bool Disconnect (const ObjectBase *obj, std::string context, const CallbackBase &cb) const = 0;
 };
 
 /**
@@ -152,8 +152,9 @@ DoMakeTraceSourceAccessor (SOURCE T::*a)
 {
   struct Accessor : public TraceSourceAccessor
   {
-    virtual bool ConnectWithoutContext (ObjectBase *obj, const CallbackBase &cb) const {
-      T *p = dynamic_cast<T*> (obj);
+    virtual bool ConnectWithoutContext (const ObjectBase *obj, const CallbackBase &cb) const {
+      ObjectBase *obj_copy = const_cast<ObjectBase*> (obj);
+      T *p = dynamic_cast<T*> (obj_copy);
       if (p == 0)
         {
           return false;
@@ -161,8 +162,9 @@ DoMakeTraceSourceAccessor (SOURCE T::*a)
       (p->*m_source).ConnectWithoutContext (cb);
       return true;
     }
-    virtual bool Connect (ObjectBase *obj, std::string context, const CallbackBase &cb) const {
-      T *p = dynamic_cast<T*> (obj);
+    virtual bool Connect (const ObjectBase *obj, std::string context, const CallbackBase &cb) const {
+      ObjectBase *obj_copy = const_cast<ObjectBase*> (obj);
+      T *p = dynamic_cast<T*> (obj_copy);
       if (p == 0)
         {
           return false;
@@ -170,8 +172,9 @@ DoMakeTraceSourceAccessor (SOURCE T::*a)
       (p->*m_source).Connect (cb, context);
       return true;
     }
-    virtual bool DisconnectWithoutContext (ObjectBase *obj, const CallbackBase &cb) const {
-      T *p = dynamic_cast<T*> (obj);
+    virtual bool DisconnectWithoutContext (const ObjectBase *obj, const CallbackBase &cb) const {
+      ObjectBase *obj_copy = const_cast<ObjectBase*> (obj);
+      T *p = dynamic_cast<T*> (obj_copy);
       if (p == 0)
         {
           return false;
@@ -179,8 +182,9 @@ DoMakeTraceSourceAccessor (SOURCE T::*a)
       (p->*m_source).DisconnectWithoutContext (cb);
       return true;
     }
-    virtual bool Disconnect (ObjectBase *obj, std::string context, const CallbackBase &cb) const {
-      T *p = dynamic_cast<T*> (obj);
+    virtual bool Disconnect (const ObjectBase *obj, std::string context, const CallbackBase &cb) const {
+      ObjectBase *obj_copy = const_cast<ObjectBase*> (obj);
+      T *p = dynamic_cast<T*> (obj_copy);
       if (p == 0)
         {
           return false;

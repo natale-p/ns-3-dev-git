@@ -195,6 +195,10 @@ TcpSocketBase::GetTypeId (void)
                      "A segment has been retransmitted",
                      MakeTraceSourceAccessor (&TcpSocketBase::m_retransmitTrace),
                      "ns3::TcpSocketBase::TcpTxRxTracedCallback")
+    .AddTraceSource ("SocketForked",
+                     "The socket has been forked",
+                     MakeTraceSourceAccessor (&TcpSocketBase::m_socketForked),
+                     "ns3::TcpSocketBase::TcpSocketForked")
   ;
   return tid;
 }
@@ -1897,6 +1901,7 @@ TcpSocketBase::ProcessListen (Ptr<Packet> packet, const TcpHeader& tcpHeader,
     }
   // Clone the socket, simulate fork
   Ptr<TcpSocketBase> newSock = Fork ();
+  m_socketForked (newSock);
   NS_LOG_LOGIC ("Cloned a TcpSocketBase " << newSock);
   Simulator::ScheduleNow (&TcpSocketBase::CompleteFork, newSock,
                           packet, tcpHeader, fromAddress, toAddress);

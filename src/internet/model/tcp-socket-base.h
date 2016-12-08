@@ -483,6 +483,13 @@ public:
   typedef void (* TcpTxRxTracedCallback)(const Ptr<const Packet> packet, const TcpHeader& header,
                                          const Ptr<const TcpSocketBase> socket);
 
+  /**
+   * TracedCallback signature for socket forking
+   *
+   * \param [in] socket The forked socket
+   */
+  typedef void (* TcpSocketForked)(const Ptr<const Socket> socket);
+
 protected:
   // Implementing ns3::TcpSocket -- Attribute get/set
   // inherited, no need to doc
@@ -1152,6 +1159,8 @@ protected:
 
   TracedCallback<Ptr<const Packet>, const TcpHeader&,
                  Ptr<const TcpSocketBase> > m_retransmitTrace; //!< Trace of retransmitted packets
+
+  TracedCallback<Ptr<const Socket> > m_socketForked; //!< Trace of socket forking
 };
 
 /**

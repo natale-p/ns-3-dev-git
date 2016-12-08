@@ -191,6 +191,10 @@ TcpSocketBase::GetTypeId (void)
                      "Receive tcp packet from IP protocol",
                      MakeTraceSourceAccessor (&TcpSocketBase::m_rxTrace),
                      "ns3::TcpSocketBase::TcpTxRxTracedCallback")
+    .AddTraceSource ("Retransmit",
+                     "A segment has been retransmitted",
+                     MakeTraceSourceAccessor (&TcpSocketBase::m_retransmitTrace),
+                     "ns3::TcpSocketBase::TcpTxRxTracedCallback")
   ;
   return tid;
 }
@@ -401,7 +405,8 @@ TcpSocketBase::TcpSocketBase (const TcpSocketBase& sock)
     m_limitedTx (sock.m_limitedTx),
     m_isFirstPartialAck (sock.m_isFirstPartialAck),
     m_txTrace (sock.m_txTrace),
-    m_rxTrace (sock.m_rxTrace)
+    m_rxTrace (sock.m_rxTrace),
+    m_retransmitTrace (sock.m_retransmitTrace)
 {
   NS_LOG_FUNCTION (this);
   NS_LOG_LOGIC ("Invoked the copy constructor");
@@ -2716,6 +2721,11 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
     }
 
   m_txTrace (p, header, this);
+
+  if (isRetransmission)
+    {
+      m_retransmitTrace (p, header, this);
+    }
 
   if (m_endPoint)
     {

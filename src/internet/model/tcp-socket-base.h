@@ -1149,6 +1149,9 @@ protected:
 
   TracedCallback<Ptr<const Packet>, const TcpHeader&,
                  Ptr<const TcpSocketBase> > m_rxTrace; //!< Trace of received packets
+
+  TracedCallback<Ptr<const Packet>, const TcpHeader&,
+                 Ptr<const TcpSocketBase> > m_retransmitTrace; //!< Trace of retransmitted packets
 };
 
 /**

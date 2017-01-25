@@ -55,7 +55,7 @@ protected:
   virtual void Tx (const Ptr<const Packet> p, const TcpHeader&h, SocketWho who);
   virtual void Rx (const Ptr<const Packet> p, const TcpHeader&h, SocketWho who);
 
-  virtual void RTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
+  virtual void AfterRTOExpired (const Ptr<const TcpSocketState> tcb, SocketWho who);
 
   void PktDropped (const Ipv4Header &ipH, const TcpHeader& tcpH, Ptr<const Packet> p);
   virtual void FinalChecks ();

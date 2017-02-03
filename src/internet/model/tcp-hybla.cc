@@ -47,18 +47,18 @@ TcpHybla::GetTypeId (void)
 
 TcpHybla::TcpHybla ()
   : TcpNewReno (),
-  m_rho (1.0),
-  m_minRtt (Time::Max ()),
-  m_cWndCnt (0)
+    m_rho (1.0),
+    m_minRtt (Time::Max ()),
+    m_cWndCnt (0)
 {
   NS_LOG_FUNCTION (this);
 }
 
 TcpHybla::TcpHybla (const TcpHybla &sock)
   : TcpNewReno (sock),
-  m_rho (sock.m_rho),
-  m_minRtt (sock.m_minRtt),
-  m_cWndCnt (sock.m_cWndCnt)
+    m_rho (sock.m_rho),
+    m_minRtt (sock.m_minRtt),
+    m_cWndCnt (sock.m_cWndCnt)
 {
   NS_LOG_FUNCTION (this);
 }
@@ -147,22 +147,25 @@ TcpHybla::CongestionAvoidance (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
   if (m_cWndCnt >= 1.0)
     {
       // double to int truncates everytime.
-      uint32_t inc = (uint32_t) m_cWndCnt;
+      uint32_t inc = std::min (2U, (uint32_t) m_cWndCnt);
       m_cWndCnt -= inc;
 
       NS_ASSERT (m_cWndCnt >= 0.0);
 
-      /* This leaves space for a tcp pacing implementation; it would be easy
-         to setup a limit on the maximum increment of the cWnd per ACK received.
-         The remaining increment is leaved for the next ACK. */
-
       tcb->m_cWnd += inc * tcb->m_segmentSize;
-
 
       NS_LOG_INFO ("In CongAvoid, updated to cwnd " << tcb->m_cWnd <<
                    " ssthresh " << tcb->m_ssThresh <<
                    " with an increment of " << inc * tcb->m_segmentSize);
     }
+}
+
+uint32_t
+TcpHybla::GetSsThresh (Ptr<const TcpSocketState> tcb, uint32_t bytesInFlight)
+{
+  NS_LOG_FUNCTION (this << bytesInFlight);
+  m_cWndCnt = 0;
+  return TcpNewReno::GetSsThresh (tcb, bytesInFlight);
 }
 
 Ptr<TcpCongestionOps>

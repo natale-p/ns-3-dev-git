@@ -340,19 +340,21 @@ int main (int argc, char *argv[])
   sinks.Create (num_flows);
 
   // Configure the error model
-  // Here we use RateErrorModel with packet error rate
+  Ptr<UniformRandomVariable> r = CreateObject<UniformRandomVariable> ();
+
   Ptr<UniformRandomVariable> uv = CreateObject<UniformRandomVariable> ();
-  uv->SetStream (50);
-  RateErrorModel error_model;
-  error_model.SetRandomVariable (uv);
-  error_model.SetUnit (RateErrorModel::ERROR_UNIT_PACKET);
-  error_model.SetRate (error_p);
+  uv->SetAttribute ("Max", DoubleValue (5));
+  uv->SetAttribute ("Min", DoubleValue (2));
+
+  BurstErrorModel error_model;
+  error_model.SetRandomBurstSize (uv);
+  error_model.SetRandomVariable (r);
+  error_model.SetBurstRate (error_p);
 
   PointToPointHelper UnReLink;
   UnReLink.SetDeviceAttribute ("DataRate", StringValue (bandwidth));
   UnReLink.SetChannelAttribute ("Delay", StringValue (delay));
   UnReLink.SetDeviceAttribute ("ReceiveErrorModel", PointerValue (&error_model));
-
 
   InternetStackHelper stack;
   stack.InstallAll ();

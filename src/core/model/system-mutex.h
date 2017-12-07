@@ -17,11 +17,10 @@
  *
  * Author: Mathieu Lacage <mathieu.lacage.inria.fr>
  */
-
-#ifndef SYSTEM_MUTEX_H
-#define SYSTEM_MUTEX_H
+#pragma once
 
 #include "ptr.h"
+#include <mutex>
 
 /**
  * @file
@@ -29,14 +28,11 @@
  * System-independent mutex primitive, ns3::SystemMutex,
  * and ns3::CriticalSection.
  */
-
-namespace ns3 { 
-	
-class SystemMutexPrivate;
+namespace ns3 {
 
 /**
  * @ingroup thread
- * @brief A class which provides a relatively platform-independent Mutual
+ * @brief A class which provides a platform-independent Mutual
  * Exclusion thread synchronization primitive.
  *
  * When more than one thread needs to access a shared resource (data structure
@@ -45,35 +41,40 @@ class SystemMutexPrivate;
  * primitive to provide that capability.  We provide platform-independent
  * access to the OS-dependent capability with the SystemMutex class.
  *
- * There are two operations:  Lock and Unlock.  Lock allows an executing 
- * SystemThread to attempt to acquire ownership of the Mutual Exclusion 
+ * There are three operations:  Lock, TryLock, and Unlock. Lock allows an
+ * executing SystemThread to attempt to acquire ownership of the Mutual Exclusion
  * object.  If the SystemMutex object is not owned by another thread, then
  * ownership is granted to the calling SystemThread and Lock returns 
  * immediately,  However, if the SystemMutex is already owned by another
  * SystemThread, the calling SystemThread is blocked until the current owner
- * releases the SystemMutex by calling Unlock.
+ * releases the SystemMutex by calling Unlock. The operation TryLock avoids
+ * the blocking, and returns false upon a failed acquisition.
  *
  * @see CriticalSection
  */
-class SystemMutex 
+class SystemMutex : private std::mutex
 {
 public:
-  SystemMutex ();
-  ~SystemMutex ();
+  SystemMutex () : std::mutex () { }
+
+  SystemMutex(const SystemMutex&) = delete;
+  SystemMutex& operator=(const SystemMutex&) = delete;
 
   /**
-   * Acquire ownership of the Mutual Exclusion object.
+   * \brief Acquire ownership of the Mutual Exclusion object.
    */
-  void Lock ();
+  void Lock () { std::mutex::lock (); }
 
   /**
-   * Release ownership of the Mutual Exclusion object.
+   * \brief Try to acquire ownership of the Mutual Exclusion object.
+   * \return True if the ownership was acquired, false otherwise.
    */
-  void Unlock ();
-	
-private:
-  /** The (system-dependent) implementation. */
-  SystemMutexPrivate * m_priv;
+  bool TryLock () { return std::mutex::try_lock (); }
+
+  /**
+   * \brief Release ownership of the Mutual Exclusion object.
+   */
+  void Unlock () { std::mutex::unlock (); }
 };
 
 /**
@@ -123,13 +124,20 @@ public:
    *
    * @param [in] mutex The mutex.
    */
-  CriticalSection (SystemMutex &mutex);
+  CriticalSection (SystemMutex &mutex)
+    : m_mutex (mutex)
+  {
+    m_mutex.Lock ();
+  }
+
   /** Destructor */
-  ~CriticalSection ();
+  ~CriticalSection ()
+  {
+    m_mutex.Unlock ();
+  }
 private:
   SystemMutex &m_mutex;  /**< The mutex. */
 };
 
 } // namespace ns3
 
-#endif /* SYSTEM_MUTEX_H */

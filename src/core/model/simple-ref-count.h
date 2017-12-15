@@ -27,6 +27,7 @@
 #include "assert.h"
 #include <stdint.h>
 #include <limits>
+#include <atomic>
 
 /**
  * \file
@@ -137,7 +138,7 @@ private:
    * Note we make this mutable so that the const methods can still
    * change it.
    */
-  mutable uint32_t m_count;
+  mutable std::atomic_uint32_t m_count;
 };
 
 } // namespace ns3

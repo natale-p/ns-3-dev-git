@@ -29,6 +29,7 @@
 #include <ns3/building.h>
 #include <ns3/mobility-building-info.h>
 
+#include <mutex>
 
 
 namespace ns3 {
@@ -93,6 +94,7 @@ protected:
     Ptr<const MobilityModel> m_receiver;
   };
 
+  mutable std::mutex m_shadowingLossMapMutex; //!< The mutex for the m_shadowingLossMap object
   mutable std::map<Ptr<const MobilityModel>,  std::map<Ptr<const MobilityModel>, ShadowingLoss> > m_shadowingLossMap;
   double EvaluateSigma (Ptr<MobilityBuildingInfo> a, Ptr<MobilityBuildingInfo> b) const;
 

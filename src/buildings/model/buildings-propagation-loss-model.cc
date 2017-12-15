@@ -167,7 +167,10 @@ const
           // side effect: will create new entry          
           // sigma is standard deviation, not variance
           double shadowingValue = m_randVariable->GetValue (0.0, (sigma*sigma));
-          ait->second[b] = ShadowingLoss (shadowingValue, b);          
+          {
+            std::lock_guard<std::mutex> lock (m_shadowingLossMapMutex);
+            ait->second[b] = ShadowingLoss (shadowingValue, b);
+          }
           return (ait->second[b].GetLoss ());
         }
     }
@@ -177,7 +180,10 @@ const
       // side effect: will create new entries in both maps
       // sigma is standard deviation, not variance
       double shadowingValue = m_randVariable->GetValue (0.0, (sigma*sigma));
-      m_shadowingLossMap[a][b] = ShadowingLoss (shadowingValue, b);  
+      {
+        std::lock_guard<std::mutex> lock (m_shadowingLossMapMutex);
+        m_shadowingLossMap[a][b] = ShadowingLoss (shadowingValue, b);
+      }
       return (m_shadowingLossMap[a][b].GetLoss ());       
     }
 }

@@ -64,7 +64,7 @@ public:
    * \param b the mobility model of the destination
    * \returns the propagation loss (in dBm)
    */
-  double GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  double GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
   /**
    * Set the BS antenna height
@@ -138,7 +138,7 @@ private:
    */
   Cost231PropagationLossModel & operator = (const Cost231PropagationLossModel &);
 
-  virtual double DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  virtual double DoCalcRxPower (double txPowerDbm, Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
   double m_BSAntennaHeight; //!< BS Antenna Height [m]
   double m_SSAntennaHeight; //!< SS Antenna Height [m]

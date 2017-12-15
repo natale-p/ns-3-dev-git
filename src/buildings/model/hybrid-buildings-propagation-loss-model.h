@@ -95,14 +95,14 @@ public:
    * \param b the mobility model of the destination
    * \returns the propagation loss (in dBm)
    */
-  virtual double GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  virtual double GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
   
 private:
 
-  double OkumuraHata (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
-  double ItuR1411 (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
-  double ItuR1238 (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  double OkumuraHata (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
+  double ItuR1411 (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
+  double ItuR1238 (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
   Ptr<OkumuraHataPropagationLossModel> m_okumuraHata;
   Ptr<ItuR1411LosPropagationLossModel> m_ituR1411Los;

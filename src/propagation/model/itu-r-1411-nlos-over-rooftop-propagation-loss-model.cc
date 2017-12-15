@@ -99,7 +99,7 @@ ItuR1411NlosOverRooftopPropagationLossModel::~ItuR1411NlosOverRooftopPropagation
 }
 
 double
-ItuR1411NlosOverRooftopPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+ItuR1411NlosOverRooftopPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   NS_LOG_FUNCTION (this << a << b);
   double Lori = 0.0;
@@ -214,8 +214,8 @@ ItuR1411NlosOverRooftopPropagationLossModel::SetFrequency (double freq)
 
 double 
 ItuR1411NlosOverRooftopPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-						Ptr<MobilityModel> a,
-						Ptr<MobilityModel> b) const
+						Ptr<const MobilityModel> a,
+						Ptr<const MobilityModel> b) const
 {
   return (txPowerDbm - GetLoss (a, b));
 }

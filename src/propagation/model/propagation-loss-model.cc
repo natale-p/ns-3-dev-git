@@ -71,11 +71,11 @@ PropagationLossModel::GetNext ()
 
 double
 PropagationLossModel::CalcRxPower (double txPowerDbm,
-                                   Ptr<MobilityModel> a,
-                                   Ptr<MobilityModel> b) const
+                                   Ptr<const MobilityModel> a,
+                                   Ptr<const MobilityModel> b) const
 {
   double self = DoCalcRxPower (txPowerDbm, a, b);
-  if (m_next != 0)
+  if (m_next != nullptr)
     {
       self = m_next->CalcRxPower (self, a, b);
     }
@@ -123,8 +123,8 @@ RandomPropagationLossModel::~RandomPropagationLossModel ()
 
 double
 RandomPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                           Ptr<MobilityModel> a,
-                                           Ptr<MobilityModel> b) const
+                                           Ptr<const MobilityModel> a,
+                                           Ptr<const MobilityModel> b) const
 {
   double rxc = -m_variable->GetValue ();
   NS_LOG_DEBUG ("attenuation coefficient="<<rxc<<"Db");
@@ -223,8 +223,8 @@ FriisPropagationLossModel::DbmFromW (double w) const
 
 double 
 FriisPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                          Ptr<MobilityModel> a,
-                                          Ptr<MobilityModel> b) const
+                                          Ptr<const MobilityModel> a,
+                                          Ptr<const MobilityModel> b) const
 {
   /*
    * Friis free space equation:
@@ -373,8 +373,8 @@ TwoRayGroundPropagationLossModel::DbmFromW (double w) const
 
 double 
 TwoRayGroundPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                                 Ptr<MobilityModel> a,
-                                                 Ptr<MobilityModel> b) const
+                                                 Ptr<const MobilityModel> a,
+                                                 Ptr<const MobilityModel> b) const
 {
   /*
    * Two-Ray Ground equation:
@@ -505,13 +505,13 @@ LogDistancePropagationLossModel::GetPathLossExponent (void) const
 
 double
 LogDistancePropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                                Ptr<MobilityModel> a,
-                                                Ptr<MobilityModel> b) const
+                                                Ptr<const MobilityModel> a,
+                                                Ptr<const MobilityModel> b) const
 {
   double distance = a->GetDistanceFrom (b);
   if (distance <= m_referenceDistance)
     {
-      return txPowerDbm - m_referenceLoss;
+      return txPowerDbm;
     }
   /**
    * The formula is:
@@ -597,8 +597,8 @@ ThreeLogDistancePropagationLossModel::ThreeLogDistancePropagationLossModel ()
 
 double 
 ThreeLogDistancePropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                                     Ptr<MobilityModel> a,
-                                                     Ptr<MobilityModel> b) const
+                                                     Ptr<const MobilityModel> a,
+                                                     Ptr<const MobilityModel> b) const
 {
   double distance = a->GetDistanceFrom (b);
   NS_ASSERT (distance >= 0);
@@ -699,8 +699,8 @@ NakagamiPropagationLossModel::NakagamiPropagationLossModel ()
 
 double
 NakagamiPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                             Ptr<MobilityModel> a,
-                                             Ptr<MobilityModel> b) const
+                                             Ptr<const MobilityModel> a,
+                                             Ptr<const MobilityModel> b) const
 {
   // select m parameter
 
@@ -792,8 +792,8 @@ FixedRssLossModel::SetRss (double rss)
 
 double
 FixedRssLossModel::DoCalcRxPower (double txPowerDbm,
-                                  Ptr<MobilityModel> a,
-                                  Ptr<MobilityModel> b) const
+                                  Ptr<const MobilityModel> a,
+                                  Ptr<const MobilityModel> b) const
 {
   return m_rss;
 }
@@ -839,7 +839,7 @@ MatrixPropagationLossModel::SetDefaultLoss (double loss)
 }
 
 void
-MatrixPropagationLossModel::SetLoss (Ptr<MobilityModel> ma, Ptr<MobilityModel> mb, double loss, bool symmetric)
+MatrixPropagationLossModel::SetLoss (Ptr<const MobilityModel> ma, Ptr<const MobilityModel> mb, double loss, bool symmetric)
 {
   NS_ASSERT (ma != 0 && mb != 0);
 
@@ -863,8 +863,8 @@ MatrixPropagationLossModel::SetLoss (Ptr<MobilityModel> ma, Ptr<MobilityModel> m
 
 double 
 MatrixPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                           Ptr<MobilityModel> a,
-                                           Ptr<MobilityModel> b) const
+                                           Ptr<const MobilityModel> a,
+                                           Ptr<const MobilityModel> b) const
 {
   std::map<MobilityPair, double>::const_iterator i = m_loss.find (std::make_pair (a, b));
 
@@ -910,8 +910,8 @@ RangePropagationLossModel::RangePropagationLossModel ()
 
 double
 RangePropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                          Ptr<MobilityModel> a,
-                                          Ptr<MobilityModel> b) const
+                                          Ptr<const MobilityModel> a,
+                                          Ptr<const MobilityModel> b) const
 {
   double distance = a->GetDistanceFrom (b);
   if (distance <= m_range)

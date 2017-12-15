@@ -58,7 +58,7 @@ public:
    * \return the loss in dBm for the propagation between
    * the two given mobility models
    */
-  double GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  double GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
 private:
   /**
@@ -77,8 +77,8 @@ private:
 
   // inherited from PropagationLossModel
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
   
 };

@@ -63,7 +63,7 @@ OhBuildingsPropagationLossModel::GetTypeId (void)
 
 
 double
-OhBuildingsPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+OhBuildingsPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   NS_LOG_FUNCTION (this << a << b);
 

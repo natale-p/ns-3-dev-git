@@ -73,7 +73,7 @@ OkumuraHataPropagationLossModel::~OkumuraHataPropagationLossModel ()
 }
 
 double
-OkumuraHataPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+OkumuraHataPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   double loss = 0.0;
   double fmhz = m_frequency / 1e6;
@@ -146,8 +146,8 @@ OkumuraHataPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityMode
 
 double 
 OkumuraHataPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-						Ptr<MobilityModel> a,
-						Ptr<MobilityModel> b) const
+						Ptr<const MobilityModel> a,
+						Ptr<const MobilityModel> b) const
 {
   return (txPowerDbm - GetLoss (a, b));
 }

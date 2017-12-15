@@ -53,7 +53,7 @@ ItuR1238PropagationLossModel::GetTypeId (void)
 }
 
 double
-ItuR1238PropagationLossModel::GetLoss (Ptr<MobilityModel> a1, Ptr<MobilityModel> b1) const
+ItuR1238PropagationLossModel::GetLoss (Ptr<const MobilityModel> a1, Ptr<const MobilityModel> b1) const
 {
   NS_LOG_FUNCTION (this << a1 << b1);
   Ptr<MobilityBuildingInfo> a = a1->GetObject<MobilityBuildingInfo> ();
@@ -105,8 +105,8 @@ ItuR1238PropagationLossModel::GetLoss (Ptr<MobilityModel> a1, Ptr<MobilityModel>
 
 double 
 ItuR1238PropagationLossModel::DoCalcRxPower (double txPowerDbm,
-						Ptr<MobilityModel> a,
-						Ptr<MobilityModel> b) const
+						Ptr<const MobilityModel> a,
+						Ptr<const MobilityModel> b) const
 {
   return (txPowerDbm - GetLoss (a, b));
 }

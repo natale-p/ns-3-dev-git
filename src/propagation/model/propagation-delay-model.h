@@ -51,7 +51,7 @@ public:
    * Calculate the propagation delay between the specified
    * source and destination.
    */
-  virtual Time GetDelay (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const = 0;
+  virtual Time GetDelay (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const = 0;
   /**
    * If this delay model uses objects of type RandomVariableStream,
    * set the stream numbers to the integers starting with the offset
@@ -89,7 +89,7 @@ public:
    */
   RandomPropagationDelayModel ();
   virtual ~RandomPropagationDelayModel ();
-  virtual Time GetDelay (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  virtual Time GetDelay (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 private:
   virtual int64_t DoAssignStreams (int64_t stream);
   Ptr<RandomVariableStream> m_variable; //!< random generator
@@ -113,7 +113,7 @@ public:
    * Use the default parameters from PropagationDelayConstantSpeed.
    */
   ConstantSpeedPropagationDelayModel ();
-  virtual Time GetDelay (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  virtual Time GetDelay (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
   /**
    * \param speed the new speed (m/s)
    */

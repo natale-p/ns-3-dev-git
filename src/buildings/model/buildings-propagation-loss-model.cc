@@ -41,7 +41,7 @@ BuildingsPropagationLossModel::ShadowingLoss::ShadowingLoss ()
 {
 }
 
-BuildingsPropagationLossModel::ShadowingLoss::ShadowingLoss (double shadowingValue, Ptr<MobilityModel> receiver)
+BuildingsPropagationLossModel::ShadowingLoss::ShadowingLoss (double shadowingValue, Ptr<const MobilityModel> receiver)
   : m_shadowingValue (shadowingValue), m_receiver (receiver)
 {
   NS_LOG_INFO (this << " New Shadowing value " << m_shadowingValue);
@@ -53,7 +53,7 @@ BuildingsPropagationLossModel::ShadowingLoss::GetLoss () const
   return (m_shadowingValue);
 }
 
-Ptr<MobilityModel>
+Ptr<const MobilityModel>
 BuildingsPropagationLossModel::ShadowingLoss::GetReceiver () const
 {
   return m_receiver;
@@ -146,17 +146,17 @@ BuildingsPropagationLossModel::InternalWallsLoss (Ptr<MobilityBuildingInfo> a, P
 
 
 double
-BuildingsPropagationLossModel::GetShadowing (Ptr<MobilityModel> a, Ptr<MobilityModel> b)
+BuildingsPropagationLossModel::GetShadowing (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b)
 const
 {
     Ptr<MobilityBuildingInfo> a1 = a->GetObject <MobilityBuildingInfo> ();
     Ptr<MobilityBuildingInfo> b1 = b->GetObject <MobilityBuildingInfo> ();
     NS_ASSERT_MSG ((a1 != 0) && (b1 != 0), "BuildingsPropagationLossModel only works with MobilityBuildingInfo");
   
-  std::map<Ptr<MobilityModel>,  std::map<Ptr<MobilityModel>, ShadowingLoss> >::iterator ait = m_shadowingLossMap.find (a);
+  std::map<Ptr<const MobilityModel>,  std::map<Ptr<const MobilityModel>, ShadowingLoss> >::iterator ait = m_shadowingLossMap.find (a);
   if (ait != m_shadowingLossMap.end ())
     {
-      std::map<Ptr<MobilityModel>, ShadowingLoss>::iterator bit = ait->second.find (b);
+      std::map<Ptr<const MobilityModel>, ShadowingLoss>::iterator bit = ait->second.find (b);
       if (bit != ait->second.end ())
         {
           return (bit->second.GetLoss ());
@@ -214,7 +214,7 @@ const
 
 
 double
-BuildingsPropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+BuildingsPropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   return txPowerDbm - GetLoss (a, b) - GetShadowing (a, b);
 }

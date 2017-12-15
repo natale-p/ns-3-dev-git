@@ -66,17 +66,17 @@ public:
    * \param b the mobility model of the destination
    * \returns the propagation loss (in dBm)
    */
-  virtual double GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const = 0;
+  virtual double GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const = 0;
 
   // inherited from PropagationLossModel
-  virtual double DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  virtual double DoCalcRxPower (double txPowerDbm, Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
 protected:
   double ExternalWallLoss (Ptr<MobilityBuildingInfo> a) const;
   double HeightLoss (Ptr<MobilityBuildingInfo> n) const;
   double InternalWallsLoss (Ptr<MobilityBuildingInfo> a, Ptr<MobilityBuildingInfo> b) const;
   
-  double GetShadowing (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const;
+  double GetShadowing (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const;
 
   double m_lossInternalWall; // in meters
 
@@ -85,15 +85,15 @@ protected:
   {
   public:
     ShadowingLoss ();
-    ShadowingLoss (double shadowingValue, Ptr<MobilityModel> receiver);
+    ShadowingLoss (double shadowingValue, Ptr<const MobilityModel> receiver);
     double GetLoss () const;
-    Ptr<MobilityModel> GetReceiver (void) const;
+    Ptr<const MobilityModel> GetReceiver (void) const;
   protected:
     double m_shadowingValue;
-    Ptr<MobilityModel> m_receiver;
+    Ptr<const MobilityModel> m_receiver;
   };
 
-  mutable std::map<Ptr<MobilityModel>,  std::map<Ptr<MobilityModel>, ShadowingLoss> > m_shadowingLossMap;
+  mutable std::map<Ptr<const MobilityModel>,  std::map<Ptr<const MobilityModel>, ShadowingLoss> > m_shadowingLossMap;
   double EvaluateSigma (Ptr<MobilityBuildingInfo> a, Ptr<MobilityBuildingInfo> b) const;
 
 

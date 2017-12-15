@@ -140,7 +140,7 @@ HybridBuildingsPropagationLossModel::SetRooftopHeight (double rooftopHeight)
 
 
 double
-HybridBuildingsPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+HybridBuildingsPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   NS_ASSERT_MSG ((a->GetPosition ().z >= 0) && (b->GetPosition ().z >= 0), "HybridBuildingsPropagationLossModel does not support underground nodes (placed at z < 0)");
 
@@ -257,7 +257,7 @@ HybridBuildingsPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<Mobility
 
 
 double
-HybridBuildingsPropagationLossModel::OkumuraHata (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+HybridBuildingsPropagationLossModel::OkumuraHata (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   if (m_frequency <= 2.3e9)
     {
@@ -270,7 +270,7 @@ HybridBuildingsPropagationLossModel::OkumuraHata (Ptr<MobilityModel> a, Ptr<Mobi
 }
 
 double
-HybridBuildingsPropagationLossModel::ItuR1411 (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+HybridBuildingsPropagationLossModel::ItuR1411 (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   if (a->GetDistanceFrom (b) < m_itu1411NlosThreshold)
     {
@@ -283,7 +283,7 @@ HybridBuildingsPropagationLossModel::ItuR1411 (Ptr<MobilityModel> a, Ptr<Mobilit
 }
 
 double
-HybridBuildingsPropagationLossModel::ItuR1238 (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+HybridBuildingsPropagationLossModel::ItuR1238 (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   return m_ituR1238->GetLoss (a,b);
 }

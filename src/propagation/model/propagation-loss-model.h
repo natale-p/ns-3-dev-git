@@ -81,7 +81,7 @@ public:
   Ptr<PropagationLossModel> GetNext ();
 
   /**
-   * Returns the Rx Power taking into account all the PropagationLossModel(s)
+   * Returns the Rx Power taking into account all the PropagatinLossModel(s)
    * chained to the current one.
    *
    * \param txPowerDbm current transmission power (in dBm)
@@ -90,8 +90,8 @@ public:
    * \returns the reception power after adding/multiplying propagation loss (in dBm)
    */
   double CalcRxPower (double txPowerDbm,
-                      Ptr<MobilityModel> a,
-                      Ptr<MobilityModel> b) const;
+                      Ptr<const MobilityModel> a,
+                      Ptr<const MobilityModel> b) const;
 
   /**
    * If this loss model uses objects of type RandomVariableStream,
@@ -131,8 +131,8 @@ private:
    * \returns the reception power after adding/multiplying propagation loss (in dBm)
    */
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const = 0;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const = 0;
 
   /**
    * Subclasses must implement this; those not using random variables
@@ -175,8 +175,8 @@ private:
    */
   RandomPropagationLossModel & operator = (const RandomPropagationLossModel &);
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
   Ptr<RandomVariableStream> m_variable; //!< random generator
 };
@@ -319,8 +319,8 @@ private:
   FriisPropagationLossModel & operator = (const FriisPropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 
   /**
@@ -439,8 +439,8 @@ private:
   TwoRayGroundPropagationLossModel & operator = (const TwoRayGroundPropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 
   /**
@@ -527,8 +527,8 @@ private:
   LogDistancePropagationLossModel & operator = (const LogDistancePropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 
   /**
@@ -610,8 +610,8 @@ private:
   ThreeLogDistancePropagationLossModel& operator= (const ThreeLogDistancePropagationLossModel&);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 
   double m_distance0; //!< Beginning of the first (near) distance field
@@ -681,8 +681,8 @@ private:
   NakagamiPropagationLossModel& operator= (const NakagamiPropagationLossModel&);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 
   double m_distance1; //!< Distance1
@@ -743,8 +743,8 @@ private:
   FixedRssLossModel & operator = (const FixedRssLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
 
   virtual int64_t DoAssignStreams (int64_t stream);
   double m_rss; //!< the received signal strength
@@ -778,7 +778,7 @@ public:
    * \param loss        a -> b path loss, positive in dB
    * \param symmetric   If true (default), both a->b and b->a paths will be affected
    */ 
-  void SetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b, double loss, bool symmetric = true);
+  void SetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b, double loss, bool symmetric = true);
 
   /**
    * Set the default propagation loss (in dB, positive) to be used, infinity if not set
@@ -802,15 +802,15 @@ private:
   MatrixPropagationLossModel &operator = (const MatrixPropagationLossModel &);
 
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
 
   virtual int64_t DoAssignStreams (int64_t stream);
 private:
   double m_default; //!< default loss
 
   /// Typedef: Mobility models pair
-  typedef std::pair< Ptr<MobilityModel>, Ptr<MobilityModel> > MobilityPair; 
+  typedef std::pair< Ptr<const MobilityModel>, Ptr<const MobilityModel> > MobilityPair;
 
   std::map<MobilityPair, double> m_loss; //!< Propagation loss between pair of nodes
 };
@@ -849,8 +849,8 @@ private:
    */
   RangePropagationLossModel& operator= (const RangePropagationLossModel&);
   virtual double DoCalcRxPower (double txPowerDbm,
-                                Ptr<MobilityModel> a,
-                                Ptr<MobilityModel> b) const;
+                                Ptr<const MobilityModel> a,
+                                Ptr<const MobilityModel> b) const;
   virtual int64_t DoAssignStreams (int64_t stream);
 private:
   double m_range; //!< Maximum Transmission Range (meters)

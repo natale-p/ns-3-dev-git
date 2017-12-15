@@ -140,7 +140,7 @@ Cost231PropagationLossModel::GetSSAntennaHeight (void) const
 }
 
 double
-Cost231PropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+Cost231PropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
 
   double distance = a->GetDistanceFrom (b);
@@ -169,7 +169,7 @@ Cost231PropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b
 }
 
 double
-Cost231PropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+Cost231PropagationLossModel::DoCalcRxPower (double txPowerDbm, Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   return txPowerDbm + GetLoss (a, b);
 }

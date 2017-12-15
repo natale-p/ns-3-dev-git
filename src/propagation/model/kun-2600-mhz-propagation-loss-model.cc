@@ -56,7 +56,7 @@ Kun2600MhzPropagationLossModel::~Kun2600MhzPropagationLossModel ()
 }
 
 double
-Kun2600MhzPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+Kun2600MhzPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   double dist = a->GetDistanceFrom (b);  
   double loss = 36 + 26 * std::log10 (dist);
@@ -65,8 +65,8 @@ Kun2600MhzPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel
 
 double 
 Kun2600MhzPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-					       Ptr<MobilityModel> a,
-					       Ptr<MobilityModel> b) const
+					       Ptr<const MobilityModel> a,
+					       Ptr<const MobilityModel> b) const
 {
   return (txPowerDbm - GetLoss (a, b));
 }

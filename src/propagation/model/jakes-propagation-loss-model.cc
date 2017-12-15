@@ -53,8 +53,8 @@ JakesPropagationLossModel::GetTypeId ()
 
 double
 JakesPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-                                          Ptr<MobilityModel> a,
-                                          Ptr<MobilityModel> b) const
+                                          Ptr<const MobilityModel> a,
+                                          Ptr<const MobilityModel> b) const
 {
   Ptr<JakesProcess> pathData = m_propagationCache.GetPathData (a, b, 0 /**Spectrum model uid is not used in PropagationLossModel*/);
   if (pathData == 0)

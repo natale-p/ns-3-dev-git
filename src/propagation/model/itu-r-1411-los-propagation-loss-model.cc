@@ -59,7 +59,7 @@ ItuR1411LosPropagationLossModel::~ItuR1411LosPropagationLossModel ()
 }
 
 double
-ItuR1411LosPropagationLossModel::GetLoss (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+ItuR1411LosPropagationLossModel::GetLoss (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   NS_LOG_FUNCTION (this);
   double dist = a->GetDistanceFrom (b);
@@ -96,8 +96,8 @@ ItuR1411LosPropagationLossModel::SetFrequency (double freq)
 
 double 
 ItuR1411LosPropagationLossModel::DoCalcRxPower (double txPowerDbm,
-						Ptr<MobilityModel> a,
-						Ptr<MobilityModel> b) const
+						Ptr<const MobilityModel> a,
+						Ptr<const MobilityModel> b) const
 {
   return (txPowerDbm - GetLoss (a, b));
 }

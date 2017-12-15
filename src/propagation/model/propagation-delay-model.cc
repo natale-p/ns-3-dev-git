@@ -74,7 +74,7 @@ RandomPropagationDelayModel::~RandomPropagationDelayModel ()
 {
 }
 Time
-RandomPropagationDelayModel::GetDelay (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+RandomPropagationDelayModel::GetDelay (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   return Seconds (m_variable->GetValue ());
 }
@@ -107,7 +107,7 @@ ConstantSpeedPropagationDelayModel::ConstantSpeedPropagationDelayModel ()
 {
 }
 Time
-ConstantSpeedPropagationDelayModel::GetDelay (Ptr<MobilityModel> a, Ptr<MobilityModel> b) const
+ConstantSpeedPropagationDelayModel::GetDelay (Ptr<const MobilityModel> a, Ptr<const MobilityModel> b) const
 {
   double distance = a->GetDistanceFrom (b);
   double seconds = distance / m_speed;

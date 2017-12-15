@@ -43,7 +43,7 @@ LteSpectrumSignalParameters::LteSpectrumSignalParameters (const LteSpectrumSigna
 }
 
 Ptr<SpectrumSignalParameters>
-LteSpectrumSignalParameters::Copy ()
+LteSpectrumSignalParameters::Copy () const
 {
   NS_LOG_FUNCTION (this);
   // Ideally we would use:
@@ -76,7 +76,7 @@ LteSpectrumSignalParametersDataFrame::LteSpectrumSignalParametersDataFrame (cons
 }
 
 Ptr<SpectrumSignalParameters>
-LteSpectrumSignalParametersDataFrame::Copy ()
+LteSpectrumSignalParametersDataFrame::Copy () const
 {
   NS_LOG_FUNCTION (this);
   // Ideally we would use:
@@ -106,7 +106,7 @@ LteSpectrumSignalParametersDlCtrlFrame::LteSpectrumSignalParametersDlCtrlFrame (
 }
 
 Ptr<SpectrumSignalParameters>
-LteSpectrumSignalParametersDlCtrlFrame::Copy ()
+LteSpectrumSignalParametersDlCtrlFrame::Copy () const
 {
   NS_LOG_FUNCTION (this);
   // Ideally we would use:
@@ -133,7 +133,7 @@ LteSpectrumSignalParametersUlSrsFrame::LteSpectrumSignalParametersUlSrsFrame (co
 }
 
 Ptr<SpectrumSignalParameters>
-LteSpectrumSignalParametersUlSrsFrame::Copy ()
+LteSpectrumSignalParametersUlSrsFrame::Copy () const
 {
   NS_LOG_FUNCTION (this);
   // Ideally we would use:

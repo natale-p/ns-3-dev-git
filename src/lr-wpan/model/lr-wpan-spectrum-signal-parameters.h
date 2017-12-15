@@ -37,7 +37,7 @@ struct LrWpanSpectrumSignalParameters : public SpectrumSignalParameters
 {
 
   // inherited from SpectrumSignalParameters
-  virtual Ptr<SpectrumSignalParameters> Copy (void);
+  virtual Ptr<SpectrumSignalParameters> Copy (void) const;
 
   /**
    * default constructor

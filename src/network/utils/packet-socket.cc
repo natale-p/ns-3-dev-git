@@ -346,7 +346,7 @@ PacketSocket::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
   if (ad.IsSingleDevice ())
     {
       Ptr<NetDevice> device = m_node->GetDevice (ad.GetSingleDevice ());
-      if (!device->Send (p, dest, ad.GetProtocol ()))
+      if (!DoSend (device, p, dest, ad.GetProtocol ()))
         {
           NS_LOG_LOGIC ("error: NetDevice::Send error");
           error = true;
@@ -357,7 +357,7 @@ PacketSocket::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
       for (uint32_t i = 0; i < m_node->GetNDevices (); i++)
         {
           Ptr<NetDevice> device = m_node->GetDevice (i);
-          if (!device->Send (p, dest, ad.GetProtocol ()))
+          if (!DoSend(device, p, dest, ad.GetProtocol ()))
             {
               NS_LOG_LOGIC ("error: NetDevice::Send error");
               error = true;
@@ -380,6 +380,13 @@ PacketSocket::SendTo (Ptr<Packet> p, uint32_t flags, const Address &address)
     {
       return p->GetSize ();
     }
+}
+
+bool
+PacketSocket::DoSend (Ptr<NetDevice> dev, Ptr<Packet> packet, const Address &dest,
+                      uint16_t protocolNumber)
+{
+  return dev->Send(packet, dest, protocolNumber);
 }
 
 void 

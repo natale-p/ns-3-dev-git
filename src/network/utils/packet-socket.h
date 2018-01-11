@@ -106,7 +106,7 @@ public:
    * \brief Set the associated node.
    * \param node the node
    */
-  void SetNode (Ptr<Node> node);
+  virtual void SetNode (Ptr<Node> node);
 
   virtual enum SocketErrno GetErrno (void) const;
   virtual enum SocketType GetSocketType (void) const;
@@ -151,6 +151,9 @@ public:
   virtual int GetPeerName (Address &address) const;
   virtual bool SetAllowBroadcast (bool allowBroadcast);
   virtual bool GetAllowBroadcast () const;
+protected:
+  virtual bool DoSend (Ptr<NetDevice>, Ptr<Packet> packet, const Address& dest,
+                       uint16_t protocolNumber);
 
 private:
   /**

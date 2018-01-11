@@ -29,6 +29,7 @@
 #include "ns3/applications-module.h"
 #include "ns3/point-to-point-helper.h"
 #include "ns3/config-store.h"
+#include "ns3/packet-socket-tc.h"
 //#include "ns3/gtk-config-store.h"
 
 using namespace ns3;
@@ -51,6 +52,8 @@ main (int argc, char *argv[])
   double interPacketInterval = 100;
   bool useCa = false;
 
+  Packet::EnablePrinting ();
+
   // Command line arguments
   CommandLine cmd;
   cmd.AddValue("numberOfNodes", "Number of eNodeBs + UE pairs", numberOfNodes);
@@ -66,6 +69,8 @@ main (int argc, char *argv[])
      Config::SetDefault ("ns3::LteHelper::NumberOfComponentCarriers", UintegerValue (2));
      Config::SetDefault ("ns3::LteHelper::EnbComponentCarrierManager", StringValue ("ns3::RrComponentCarrierManager"));
    }
+
+  Config::SetDefault("ns3::PacketSocketFactory::InstanceName", TypeIdValue (PacketSocketTc::GetTypeId()));
 
   Ptr<LteHelper> lteHelper = CreateObject<LteHelper> ();
   Ptr<PointToPointEpcHelper>  epcHelper = CreateObject<PointToPointEpcHelper> ();
@@ -165,6 +170,8 @@ main (int argc, char *argv[])
       dlClient.SetAttribute ("Interval", TimeValue (MilliSeconds(interPacketInterval)));
       dlClient.SetAttribute ("MaxPackets", UintegerValue(1000000));
 
+      dlClient.SetAttribute("PacketSize", UintegerValue(30));
+
       UdpClientHelper ulClient (remoteHostAddr, ulPort);
       ulClient.SetAttribute ("Interval", TimeValue (MilliSeconds(interPacketInterval)));
       ulClient.SetAttribute ("MaxPackets", UintegerValue(1000000));
@@ -174,15 +181,7 @@ main (int argc, char *argv[])
       client.SetAttribute ("MaxPackets", UintegerValue(1000000));
 
       clientApps.Add (dlClient.Install (remoteHost));
-      clientApps.Add (ulClient.Install (ueNodes.Get(u)));
-      if (u+1 < ueNodes.GetN ())
-        {
-          clientApps.Add (client.Install (ueNodes.Get(u+1)));
-        }
-      else
-        {
-          clientApps.Add (client.Install (ueNodes.Get(0)));
-        }
+      //clientApps.Add (ulClient.Install (ueNodes.Get(u)));
     }
   serverApps.Start (Seconds (0.01));
   clientApps.Start (Seconds (0.01));

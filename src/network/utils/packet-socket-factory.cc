@@ -21,6 +21,7 @@
 #include "ns3/node.h"
 #include "ns3/log.h"
 #include "packet-socket.h"
+#include "ns3/object-factory.h"
 
 namespace ns3 {
 
@@ -33,7 +34,13 @@ PacketSocketFactory::GetTypeId (void)
 {
   static TypeId tid = TypeId ("ns3::PacketSocketFactory")
     .SetParent<SocketFactory> ()
-    .SetGroupName("Network");
+    .SetGroupName("Network")
+    .AddAttribute ("InstanceName",
+                   "The type id of the PacketSocket to use",
+                   TypeIdValue (PacketSocket::GetTypeId ()),
+                   MakeTypeIdAccessor (&PacketSocketFactory::m_tid),
+                   MakeTypeIdChecker ())
+  ;
   return tid;
 }
 
@@ -46,7 +53,13 @@ Ptr<Socket> PacketSocketFactory::CreateSocket (void)
 {
   NS_LOG_FUNCTION (this);
   Ptr<Node> node = GetObject<Node> ();
-  Ptr<PacketSocket> socket = CreateObject<PacketSocket> ();
+  ObjectFactory factory;
+  factory.SetTypeId (m_tid);
+  if (! m_tid.IsChildOf(PacketSocket::GetTypeId()))
+    {
+      NS_FATAL_ERROR ("The class should be derived from PacketSocket.");
+    }
+  Ptr<PacketSocket> socket = StaticCast<PacketSocket> (factory.Create<Socket> ());
   socket->SetNode (node);
   return socket;
 } 

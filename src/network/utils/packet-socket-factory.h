@@ -49,6 +49,9 @@ public:
    * \return a pointer to the created socket
    */
   virtual Ptr<Socket> CreateSocket (void);
+
+private:
+  TypeId m_tid;  //!< TypeId of the PacketSocket instance class
 };
 
 } // namespace ns3

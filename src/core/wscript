@@ -1,5 +1,5 @@
 ## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
-import sys
+import sys, os
 
 from waflib import Options
 import wutils
@@ -35,11 +35,13 @@ def options(opt):
                          % ", ".join([repr(p) for p in list(int64x64.keys())])),
                    choices=list(int64x64.keys()),
                    dest='int64x64_impl')
-                   
     opt.add_option('--disable-pthread',
                    help=('Whether to enable the use of POSIX threads'),
                    action="store_true", default=False,
                    dest='disable_pthread')
+    opt.add_option('--with-stlab',
+                   help=('Use STLAB library, given by the indicated path'),
+                   default='', dest='with_stlab')
 
 
 
@@ -54,7 +56,7 @@ def configure(conf):
             int64x64_impl = 'int128'
         else:
             int64x64_impl = 'cairo'
-        
+
     def_flag, env_flag, highprec = int64x64[int64x64_impl]
     # Add a tag confirming default choice
     if Options.options.int64x64_impl == 'default':
@@ -127,6 +129,31 @@ int main ()
                                      "threading not enabled")
         conf.env["ENABLE_REAL_TIME"] = conf.env['ENABLE_THREADING']
 
+    if Options.options.with_stlab:
+        if os.path.isdir(Options.options.with_stlab):
+            conf.msg("Checking for STLAB location", ("%s (given)" % Options.options.with_stlab))
+            conf.env['WITH_STLAB'] = os.path.abspath(Options.options.with_stlab)
+
+    if not conf.env['WITH_STLAB']:
+       conf.msg("Checking for STLAB 'version.hpp' file location", False)
+       conf.report_optional_feature("stlab", "STLAB concurrency library", False,
+                                    "STLAB not found (see option --with-stlab)")
+       return
+
+    found = False
+
+    if os.path.isfile(os.path.join(conf.env['WITH_STLAB'], 'stlab/version.hpp')):
+        found = True
+
+    if not found:
+        conf.env['STLAB_ENABLED'] = False
+        conf.report_optional_feature("stlab", "STLAB concurrency library", False,
+                                 "STLAB library 'version.hpp' is missing: STLAB has not been built?")
+    else:
+        conf.env['STLAB_ENABLED'] = True
+        conf.report_optional_feature("stlab", "STLAB concurrency library", True, "")
+        conf.env.append_value("CXXFLAGS", ["-I"+conf.env['WITH_STLAB'], "-DHAVE_STLAB=1"])
+
     conf.write_config_header('ns3/core-config.h', top=True)
 
 def build(bld):
@@ -145,6 +172,7 @@ def build(bld):
         'model/simulator.cc',
         'model/simulator-impl.cc',
         'model/default-simulator-impl.cc',
+        'model/concurrent-simulator-impl.cc',
         'model/timer.cc',
         'model/watchdog.cc',
         'model/synchronizer.cc',
@@ -224,6 +252,8 @@ def build(bld):
         'model/simulator.h',
         'model/simulator-impl.h',
         'model/default-simulator-impl.h',
+        'model/concurrent-simulator-impl.h',
+        'model/concurrent-queue.h',
         'model/scheduler.h',
         'model/list-scheduler.h',
         'model/map-scheduler.h',

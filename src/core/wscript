@@ -148,7 +148,6 @@ def build(bld):
         'model/timer.cc',
         'model/watchdog.cc',
         'model/synchronizer.cc',
-        'model/make-event.cc',
         'model/log.cc',
         'model/breakpoint.cc',
         'model/type-id.cc',

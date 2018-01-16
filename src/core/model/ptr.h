@@ -210,138 +210,20 @@ public:
  * Create class instances by constructors with varying numbers
  * of arguments and return them by Ptr.
  *
- * These methods work for any class \c T.
+ * This template work for any class \c T derived from ns3::SimpleRefCount
  *
  * \see CreateObject for methods to create derivatives of ns3::Object
  */
 /** @{ */
 /**
- * \tparam T \explicit The type of class object to create.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T>
-Ptr<T> Create (void);
-
-/**
  * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \param  [in] a1 The first constructor argument.
+ * \tparam Ts \deduced Types of the constructor arguments.
+ * \param  [in] args Constructor arguments.
  * \return A Ptr to the newly created \c T.
  */
 template <typename T,
-          typename T1>
-Ptr<T> Create (T1 a1);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2>
-Ptr<T> Create (T1 a1, T2 a2);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \param  [in] a3 The third constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2,
-          typename T3>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \param  [in] a3 The third constructor argument.
- * \param  [in] a4 The fourth constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2,
-          typename T3, typename T4>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \param  [in] a3 The third constructor argument.
- * \param  [in] a4 The fourth constructor argument.
- * \param  [in] a5 The fifth constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2,
-          typename T3, typename T4,
-          typename T5>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \tparam T6 \deduced The type of the sixth constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \param  [in] a3 The third constructor argument.
- * \param  [in] a4 The fourth constructor argument.
- * \param  [in] a5 The fifth constructor argument.
- * \param  [in] a6 The sixth constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2,
-          typename T3, typename T4,
-          typename T5, typename T6>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6);
-
-/**
- * \tparam T  \explicit The type of class object to create.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \tparam T6 \deduced The type of the sixth constructor argument.
- * \tparam T7 \deduced The type of the seventh constructor argument.
- * \param  [in] a1 The first constructor argument.
- * \param  [in] a2 The second constructor argument.
- * \param  [in] a3 The third constructor argument.
- * \param  [in] a4 The fourth constructor argument.
- * \param  [in] a5 The fifth constructor argument.
- * \param  [in] a6 The sixth constructor argument.
- * \param  [in] a7 The seventh constructor argument.
- * \return A Ptr to the newly created \c T.
- */
-template <typename T,
-          typename T1, typename T2,
-          typename T3, typename T4,
-          typename T5, typename T6,
-          typename T7>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7);
+          typename... Ts>
+Ptr<T> Create (Ts... args);
 /** @}*/
 
 /**
@@ -512,52 +394,10 @@ namespace ns3 {
  *  friend non-member function implementations
  ************************************************/
 
-template <typename T>
-Ptr<T> Create (void)
+template <typename T, typename... Ts>
+Ptr<T> Create (Ts... args)
 {
-  return Ptr<T> (new T (), false);
-}
-
-template <typename T, typename T1>
-Ptr<T> Create (T1 a1)
-{
-  return Ptr<T> (new T (a1), false);
-}
-
-template <typename T, typename T1, typename T2>
-Ptr<T> Create (T1 a1, T2 a2)
-{
-  return Ptr<T> (new T (a1, a2), false);
-}
-
-template <typename T, typename T1, typename T2, typename T3>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3)
-{
-  return Ptr<T> (new T (a1, a2, a3), false);
-}
-
-template <typename T, typename T1, typename T2, typename T3, typename T4>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4)
-{
-  return Ptr<T> (new T (a1, a2, a3, a4), false);
-}
-
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
-{
-  return Ptr<T> (new T (a1, a2, a3, a4, a5), false);
-}
-
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-{
-  return Ptr<T> (new T (a1, a2, a3, a4, a5, a6), false);
-}
-
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-Ptr<T> Create (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7)
-{
-  return Ptr<T> (new T (a1, a2, a3, a4, a5, a6, a7), false);
+  return Ptr<T> (new T (args...), false);
 }
 
 template <typename U>

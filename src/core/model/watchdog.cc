@@ -23,7 +23,7 @@
 
 /**
  * \file
- * \ingroup timer
+ * \ingroup vttimer
  * ns3::Watchdog timer class implementation.
  */
 

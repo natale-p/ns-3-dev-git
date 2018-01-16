@@ -219,7 +219,8 @@ private:
   /**
    * Check if the object has been initialized.
    *
-   * \brief returns true if the object has been initialized. 
+   * \brief Check if the object has been initialized.
+   * \returns \c true if the object has been initialized.
    */
   bool IsInitialized (void) const;
 
@@ -522,144 +523,14 @@ Ptr<T> CompleteConstruct (T *object)
  * Create an object by type, with varying number of constructor parameters.
  *
  * \tparam T \explicit The type of the derived object to construct.
+ * \tparam Ts \deduced Constructor argument types.
+ * \param [in] args The arguments to use in creating the object.
  * \return The derived object.
  */
-template <typename T>
-Ptr<T> CreateObject (void)
+template <typename T, typename... Ts>
+Ptr<T> CreateObject (Ts... args)
 {
-  return CompleteConstruct (new T ());
-}
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the constructor argument.
- * \param [in] a1 The constructor argument
- * \return The derived object.
- */
-template <typename T, typename T1>
-Ptr<T> CreateObject (T1 a1)
-{
-  return CompleteConstruct (new T (a1));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2>
-Ptr<T> CreateObject (T1 a1, T2 a2)
-{
-  return CompleteConstruct (new T (a1,a2));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \param [in] a3 The constructor third argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2, typename T3>
-Ptr<T> CreateObject (T1 a1, T2 a2, T3 a3)
-{
-  return CompleteConstruct (new T (a1,a2,a3));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \param [in] a3 The constructor third argument
- * \param [in] a4 The constructor fourth argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2, typename T3, typename T4>
-Ptr<T> CreateObject (T1 a1, T2 a2, T3 a3, T4 a4)
-{
-  return CompleteConstruct (new T (a1,a2,a3,a4));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \param [in] a3 The constructor third argument
- * \param [in] a4 The constructor fourth argument
- * \param [in] a5 The constructor fifth argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5>
-Ptr<T> CreateObject (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5)
-{
-  return CompleteConstruct (new T (a1,a2,a3,a4,a5));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \tparam T6 \deduced The type of the sixth constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \param [in] a3 The constructor third argument
- * \param [in] a4 The constructor fourth argument
- * \param [in] a5 The constructor fifth argument
- * \param [in] a6 The constructor sixth argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-Ptr<T> CreateObject (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6)
-{
-  return CompleteConstruct (new T (a1,a2,a3,a4,a5,a6));
-}
-
-/**
- * \copybrief CreateObject()
- * \tparam T \explicit The type of the derived object to construct.
- * \tparam T1 \deduced The type of the first constructor argument.
- * \tparam T2 \deduced The type of the second constructor argument.
- * \tparam T3 \deduced The type of the third constructor argument.
- * \tparam T4 \deduced The type of the fourth constructor argument.
- * \tparam T5 \deduced The type of the fifth constructor argument.
- * \tparam T6 \deduced The type of the sixth constructor argument.
- * \tparam T7 \deduced The type of the seventh constructor argument.
- * \param [in] a1 The constructor first argument
- * \param [in] a2 The constructor second argument
- * \param [in] a3 The constructor third argument
- * \param [in] a4 The constructor fourth argument
- * \param [in] a5 The constructor fifth argument
- * \param [in] a6 The constructor sixth argument
- * \param [in] a7 The constructor seventh argument
- * \return The derived object.
- */
-template <typename T, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-Ptr<T> CreateObject (T1 a1, T2 a2, T3 a3, T4 a4, T5 a5, T6 a6, T7 a7)
-{
-  return CompleteConstruct (new T (a1,a2,a3,a4,a5,a6,a7));
+  return CompleteConstruct (new T (args...));
 }
 /**@}*/
 

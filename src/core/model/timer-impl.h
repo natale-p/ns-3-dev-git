@@ -28,7 +28,7 @@
 
 /**
  * \file
- * \ingroup timer
+ * \ingroup vttimer
  * \ingroup timerimpl
  * ns3::TimerImpl declaration and implementation.
  */
@@ -36,7 +36,7 @@
 namespace ns3 {
 
 /**
- * \ingroup timer
+ * \ingroup vttimer
  * The timer implementation underlying Timer and Watchdog.
  */
 class TimerImpl
@@ -143,7 +143,7 @@ public:
 namespace ns3 {
 
 /**
- * \ingroup timer
+ * \ingroup vttimer
  * \defgroup timerimpl TimerImpl Implementation
  * @{
  */
@@ -962,7 +962,7 @@ MakeTimerImpl (IntToType<6>, MEM_PTR memPtr, OBJ_PTR objPtr)
   return function;
 }
 
-/**@}*/  // \ingroup timer
+/**@}*/  // \ingroup vttimer
 
   
 /********************************************************************

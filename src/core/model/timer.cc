@@ -24,7 +24,7 @@
 
 /**
  * \file
- * \ingroup timer
+ * \ingroup vttimer
  * ns3::Timer implementation.
  */
 

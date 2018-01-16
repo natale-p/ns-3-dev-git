@@ -184,7 +184,7 @@ DefaultSimulatorImpl::ProcessEventsWithContext (void)
        ev.key.m_uid = m_uid;
        m_uid++;
        m_unscheduledEvents++;
-       m_events->Insert (ev);
+       Insert (ev);
     }
 }
 
@@ -241,7 +241,7 @@ DefaultSimulatorImpl::Schedule (Time const &delay, EventImpl *event)
   ev.key.m_uid = m_uid;
   m_uid++;
   m_unscheduledEvents++;
-  m_events->Insert (ev);
+  Insert (ev);
   return EventId (event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
 }
 
@@ -260,7 +260,7 @@ DefaultSimulatorImpl::ScheduleWithContext (uint32_t context, Time const &delay, 
       ev.key.m_uid = m_uid;
       m_uid++;
       m_unscheduledEvents++;
-      m_events->Insert (ev);
+      Insert (ev);
     }
   else
     {
@@ -289,7 +289,7 @@ DefaultSimulatorImpl::ScheduleNow (EventImpl *event)
   ev.key.m_uid = m_uid;
   m_uid++;
   m_unscheduledEvents++;
-  m_events->Insert (ev);
+  Insert (ev);
   return EventId (event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
 }
 
@@ -299,9 +299,15 @@ DefaultSimulatorImpl::ScheduleDestroy (EventImpl *event)
   NS_ASSERT_MSG (SystemThread::Equals (m_main), "Simulator::ScheduleDestroy Thread-unsafe invocation!");
 
   EventId id (Ptr<EventImpl> (event, false), m_currentTs, 0xffffffff, 2);
-  m_destroyEvents.push_back (id);
+  InsertDestroy (id);
   m_uid++;
   return id;
+}
+
+void
+DefaultSimulatorImpl::InsertDestroy (const EventId &event)
+{
+  m_destroyEvents.push_back (event);
 }
 
 Time
@@ -410,6 +416,12 @@ uint32_t
 DefaultSimulatorImpl::GetContext (void) const
 {
   return m_currentContext;
+}
+
+void
+DefaultSimulatorImpl::Insert (const Scheduler::Event &event)
+{
+  m_events->Insert(event);
 }
 
 } // namespace ns3

@@ -78,7 +78,18 @@ public:
   virtual uint32_t GetSystemId (void) const; 
   virtual uint32_t GetContext (void) const;
 
-private:
+protected:
+  /**
+   * \brief Insert an event in the event list.
+   * \param event The event to insert
+   */
+  void Insert (const Scheduler::Event &event);
+  /**
+   * \brief Insert an event in the destroy event list
+   * \param event The event to insert
+   */
+  void InsertDestroy (const EventId &event);
+
   virtual void DoDispose (void);
 
   /** Process the next event. */
@@ -117,7 +128,7 @@ private:
   Ptr<Scheduler> m_events;
 
   /** Next event unique id. */
-  uint32_t m_uid;
+  std::atomic_uint32_t m_uid {0};
   /** Unique id of the current event. */
   uint32_t m_currentUid;
   /** Timestamp of the current event. */

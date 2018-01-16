@@ -56,6 +56,17 @@ NS_LOG_COMPONENT_DEFINE ("Simulator");
 
 /**
  * \ingroup simulator
+ * Enable o disable the thread pool.
+ */
+
+GlobalValue g_EnableThreads = GlobalValue
+  ("EnableThreads",
+   "Enable threads of execution",
+   BooleanValue (false),
+   MakeBooleanChecker ());
+
+/**
+ * \ingroup simulator
  * The specific simulator implementation to use.
  *
  * Must be derived from SimulatorImpl.

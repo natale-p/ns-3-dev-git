@@ -24,12 +24,15 @@
 #include "event-id.h"
 #include "event-impl.h"
 #include "make-event.h"
+#include "simulator-impl.h"
 #include "nstime.h"
 
 #include "object-factory.h"
 
 #include <stdint.h>
 #include <string>
+
+#include <stlab/concurrency/future.hpp>
 
 /**
  * @file
@@ -183,6 +186,19 @@ public:
    * @return The current simulation context
    */
   static uint32_t GetContext (void);
+
+  /**
+   * \brief Execute a new job in a different thread
+   *
+   * \param f Callable object
+   * \param args Arguments for the callable
+   */
+  template <typename F, typename... Args>
+  static auto AddJob(F&& f, Args&&... args)
+  -> stlab::future<std::result_of_t<std::decay_t<F>(std::decay_t<Args>...)>>
+  {
+    return GetImplementation ()->AddJob (f, args...);
+  }
 
   /** Context enum values. */
   enum {

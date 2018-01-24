@@ -23,6 +23,11 @@
 #include "event-impl.h"
 #include <functional>
 
+#ifdef HAVE_STLAB
+#include <stlab/concurrency/future.hpp>
+#include <stlab/concurrency/utility.hpp>
+#endif
+
 /**
  * \file
  * \ingroup events
@@ -30,6 +35,35 @@
  */
 
 namespace ns3 {
+
+#ifdef HAVE_STLAB
+/**
+ * \brief Check (at compile time) if T is a stlab::future<void>
+ * \tparam T Type to check
+ */
+template<typename T>
+using IsFuture = std::is_convertible<T, stlab::future<void>>;
+
+/**
+ * If function returns a stlab::future<void>, then directly run it.
+ */
+template<typename F, std::enable_if_t<IsFuture<std::result_of_t<F()>>::value>* = nullptr>
+void DoInvokeSelect(F& function)
+{
+  stlab::future<void> ret = function();
+  blocking_get (ret);
+}
+
+/**
+ * If function returns anything else than a stlab::future<void>, then
+ * encapsulate it inside a stlab::future<void> that runs now.
+ */
+template<typename F, std::enable_if_t<!IsFuture<std::result_of_t<F()>>::value>* = nullptr>
+void DoInvokeSelect(F& function)
+{
+  function();
+}
+#endif // HAVE_STLAB
 
 /**
  * \ingroup events
@@ -56,9 +90,22 @@ protected:
 private:
     virtual void Notify ()
     {
+#ifdef HAVE_STLAB
+      DoInvokeSelect (m_function);
+#else
       m_function ();
+#endif
     }
+#ifdef HAVE_STLAB
+    using result = decltype(std::bind(std::declval<Ts>()...)());
+
+    std::conditional_t<IsFuture<result>::value,
+        std::function<stlab::future<void>()>,
+        std::function<void()>
+    > m_function;
+#else
     std::function<void ()> m_function;
+#endif
   };
   return new EventMemberImpl (std::forward<Ts> (args)...);
 }

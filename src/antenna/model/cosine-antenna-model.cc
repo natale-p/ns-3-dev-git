@@ -91,7 +91,7 @@ CosineAntennaModel::GetOrientation () const
 }
 
 double 
-CosineAntennaModel::GetGainDb (Angles a)
+CosineAntennaModel::GetGainDb (Angles a) const
 {
   NS_LOG_FUNCTION (this << a);
   // azimuth angle w.r.t. the reference system of the antenna

@@ -64,7 +64,7 @@ public:
    * isotropic radiator. Since a power gain is used, the efficiency of
    * the antenna is expected to be included in the gain value. 
    */
-  virtual double GetGainDb (Angles a) = 0;
+  virtual double GetGainDb (Angles a) const = 0;
 
 };
 

@@ -89,7 +89,7 @@ ParabolicAntennaModel::GetOrientation () const
 }
 
 double 
-ParabolicAntennaModel::GetGainDb (Angles a)
+ParabolicAntennaModel::GetGainDb (Angles a) const
 {
   NS_LOG_FUNCTION (this << a);
   // azimuth angle w.r.t. the reference system of the antenna

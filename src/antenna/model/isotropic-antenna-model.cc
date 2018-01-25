@@ -49,7 +49,7 @@ IsotropicAntennaModel::IsotropicAntennaModel ()
 }
 
 double 
-IsotropicAntennaModel::GetGainDb (Angles a)
+IsotropicAntennaModel::GetGainDb (Angles a) const
 {
   NS_LOG_FUNCTION (this << a);
   return 0.0;

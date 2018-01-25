@@ -145,6 +145,39 @@ protected:
 
 private:
   /**
+   * \brief Hold the result of a computation that (possibly) can be run
+   * in another thread.
+   */
+  struct ComputationResult
+  {
+    Time delay;                               //!< The resulting delay
+    Ptr<SpectrumSignalParameters> rxParams;   //!< The RX parameters
+    Ptr<SpectrumPhy> txPhy;                   //!< The PHY of the Sender
+    Ptr<SpectrumPhy> rxPhy;
+    double pathLossDb;                        //!< Path loss
+  };
+
+  /**
+   * \brief Compute something hard
+   *
+   * \param rxParams Receiver Parameters (will be copied in the returning struct).
+   * These will be modified, so better providing a lock if the copy is not
+   * unique. Luckly, we do an hard copy before passing it to this function,
+   * so it is unique and it doesn't need a lock.
+   * \param receiverMobility The mobility model of the receiver
+   * \param txMobility The mobility model of the transmitter
+   * \param rxPhyIterator An Iterator over Phy (I don't really know why)
+   * \param txPhy The Phy layer of the transmitter
+   * \param traceLock A lock for firing the trace source
+   * \return
+   */
+  ComputationResult DoComputationPsd (const Ptr<SpectrumSignalParameters> &rxParams,
+                                      const Ptr<const MobilityModel> &receiverMobility,
+                                      const Ptr<const MobilityModel> &txMobility,
+                                      const Ptr<SpectrumPhy> &rxPhy,
+                                      const Ptr<SpectrumPhy> &txPhy) const;
+
+  /**
    * This method checks if m_rxSpectrumModelInfoMap contains an entry
    * for the given TX SpectrumModel. If such entry exists, it returns
    * an interator pointing to it. If not, it creates a new entry in

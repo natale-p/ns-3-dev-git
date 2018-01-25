@@ -267,35 +267,33 @@ MultiModelSpectrumChannel::StartTx (Ptr<SpectrumSignalParameters> txParams)
 
   NS_ASSERT (txParams->txPhy);
   NS_ASSERT (txParams->psd);
-  Ptr<SpectrumSignalParameters> txParamsTrace = txParams->Copy (); // copy it since traced value cannot be const (because of potential underlying DynamicCasts)
-  m_txSigParamsTrace (txParamsTrace);
 
-  Ptr<const MobilityModel> txMobility = txParams->txPhy->GetMobility ();
+  auto txInfoIteratorerator = FindAndEventuallyAddTxSpectrumModel (txParams->psd->GetSpectrumModel ());
   const SpectrumModelUid_t txSpectrumModelUid = txParams->psd->GetSpectrumModelUid ();
-  NS_LOG_LOGIC (" txSpectrumModelUid " << txSpectrumModelUid);
+  Ptr<const MobilityModel> txMobility = txParams->txPhy->GetMobility ();
+  Ptr<SpectrumSignalParameters> txParamsTrace = txParams->Copy ();
 
-  //
-  TxSpectrumModelInfoMap_t::const_iterator txInfoIteratorerator = FindAndEventuallyAddTxSpectrumModel (txParams->psd->GetSpectrumModel ());
   NS_ASSERT (txInfoIteratorerator != m_txSpectrumModelInfoMap.end ());
 
+  m_txSigParamsTrace (txParamsTrace);
+
+  NS_LOG_LOGIC (" txSpectrumModelUid " << txSpectrumModelUid);
   NS_LOG_LOGIC ("converter map for TX SpectrumModel with Uid " << txInfoIteratorerator->first);
   NS_LOG_LOGIC ("converter map size: " << txInfoIteratorerator->second.m_spectrumConverterMap.size ());
   NS_LOG_LOGIC ("converter map first element: " << txInfoIteratorerator->second.m_spectrumConverterMap.begin ()->first);
 
-  for (RxSpectrumModelInfoMap_t::const_iterator rxInfoIterator = m_rxSpectrumModelInfoMap.begin ();
-       rxInfoIterator != m_rxSpectrumModelInfoMap.end ();
-       ++rxInfoIterator)
+  for (auto rxInfoIterator : m_rxSpectrumModelInfoMap)
     {
-      const SpectrumModelUid_t rxSpectrumModelUid = rxInfoIterator->second.m_rxSpectrumModel->GetUid ();
-
       Ptr <const SpectrumValue> convertedTxPowerSpectrum;
+      const SpectrumModelUid_t rxSpectrumModelUid = rxInfoIterator.second.m_rxSpectrumModel->GetUid ();
+
       if (txSpectrumModelUid == rxSpectrumModelUid)
         {
           convertedTxPowerSpectrum = txParams->psd;
         }
       else
         {
-          SpectrumConverterMap_t::const_iterator rxConverterIterator = txInfoIteratorerator->second.m_spectrumConverterMap.find (rxSpectrumModelUid);
+          auto rxConverterIterator = txInfoIteratorerator->second.m_spectrumConverterMap.find (rxSpectrumModelUid);
           if (rxConverterIterator == txInfoIteratorerator->second.m_spectrumConverterMap.end ())
             {
               // No converter means TX SpectrumModel is orthogonal to RX SpectrumModel
@@ -304,87 +302,108 @@ MultiModelSpectrumChannel::StartTx (Ptr<SpectrumSignalParameters> txParams)
           convertedTxPowerSpectrum = rxConverterIterator->second.Convert (txParams->psd);
         }
 
-
-      for (std::set<Ptr<SpectrumPhy> >::const_iterator rxPhyIterator = rxInfoIterator->second.m_rxPhySet.cbegin ();
-           rxPhyIterator != rxInfoIterator->second.m_rxPhySet.end ();
-           ++rxPhyIterator)
+      for (const Ptr<SpectrumPhy> &rxPhy : rxInfoIterator.second.m_rxPhySet)
         {
-          NS_ASSERT_MSG ((*rxPhyIterator)->GetRxSpectrumModel ()->GetUid () == rxSpectrumModelUid,
-                         "SpectrumModel change was not notified to MultiModelSpectrumChannel (i.e., AddRx should be called again after model is changed)");
+          NS_ASSERT_MSG (rxPhy->GetRxSpectrumModel ()->GetUid () == rxSpectrumModelUid,
+                         "SpectrumModel change was not notified to MultiModelSpectrumChannel"
+                         "(i.e., AddRx should be called again after model is changed)");
 
-          if ((*rxPhyIterator) != txParams->txPhy)
+          if (rxPhy != txParams->txPhy)
             {
-              NS_LOG_LOGIC (" copying signal parameters " << txParams);
-              Ptr<SpectrumSignalParameters> rxParams = txParams->Copy ();
-              rxParams->psd = Copy<SpectrumValue> (convertedTxPowerSpectrum);
-              Time delay = MicroSeconds (0);
-
-              Ptr<MobilityModel> receiverMobility = (*rxPhyIterator)->GetMobility ();
+              const Ptr<const MobilityModel> &receiverMobility = rxPhy->GetMobility ();
 
               if (txMobility && receiverMobility)
                 {
-                  double pathLossDb = 0;
-                  if (rxParams->txAntenna != nullptr)
-                    {
-                      Angles txAngles (receiverMobility->GetPosition (), txMobility->GetPosition ());
-                      double txAntennaGain = rxParams->txAntenna->GetGainDb (txAngles);
-                      NS_LOG_LOGIC ("txAntennaGain = " << txAntennaGain << " dB");
-                      pathLossDb -= txAntennaGain;
-                    }
-                  Ptr<AntennaModel> rxAntenna = (*rxPhyIterator)->GetRxAntenna ();
-                  if (rxAntenna != nullptr)
-                    {
-                      Angles rxAngles (txMobility->GetPosition (), receiverMobility->GetPosition ());
-                      double rxAntennaGain = rxAntenna->GetGainDb (rxAngles);
-                      NS_LOG_LOGIC ("rxAntennaGain = " << rxAntennaGain << " dB");
-                      pathLossDb -= rxAntennaGain;
-                    }
-                  if (m_propagationLoss)
-                    {
-                      double propagationGainDb = m_propagationLoss->CalcRxPower (0, txMobility, receiverMobility);
-                      NS_LOG_LOGIC ("propagationGainDb = " << propagationGainDb << " dB");
-                      pathLossDb -= propagationGainDb;
-                    }
-                  NS_LOG_LOGIC ("total pathLoss = " << pathLossDb << " dB");    
-                  m_pathLossTrace (txParams->txPhy, *rxPhyIterator, pathLossDb);
-                  if ( pathLossDb > m_maxLossDb)
-                    {
-                      // beyond range
-                      continue;
-                    }
-                  double pathGainLinear = std::pow (10.0, (-pathLossDb) / 10.0);
-                  *(rxParams->psd) *= pathGainLinear;              
+                  Ptr<SpectrumSignalParameters> rxParams = txParams->Copy ();
+                  rxParams->psd = Copy<SpectrumValue> (convertedTxPowerSpectrum);
+                  ComputationResult ret;
 
-                  if (m_spectrumPropagationLoss)
+                  // Do computation
+                  ret = DoComputationPsd(rxParams, receiverMobility, txMobility,
+                                         rxPhy, txParams->txPhy);
+
+                  const Ptr<const NetDevice> &netDev = ret.rxPhy->GetDevice ();
+
+                  if (netDev)
                     {
-                      rxParams->psd = m_spectrumPropagationLoss->CalcRxPowerSpectralDensity (rxParams->psd, txMobility, receiverMobility);
+                      // the receiver has a NetDevice, so we expect that it is attached to a Node
+                      uint32_t dstNode =  netDev->GetNode ()->GetId ();
+                      Simulator::ScheduleWithContext (dstNode, ret.delay, &MultiModelSpectrumChannel::StartRx,
+                                                      this, ret.rxParams, ret.rxPhy);
+                    }
+                  else
+                    {
+                      // the receiver is not attached to a NetDevice, so we cannot assume that it is attached to a node
+                      Simulator::Schedule (ret.delay, &MultiModelSpectrumChannel::StartRx,
+                                           this, ret.rxParams, ret.rxPhy);
                     }
 
-                  if (m_propagationDelay)
-                    {
-                      delay = m_propagationDelay->GetDelay (txMobility, receiverMobility);
-                    }
-                }
-
-              Ptr<NetDevice> netDev = (*rxPhyIterator)->GetDevice ();
-              if (netDev)
-                {
-                  // the receiver has a NetDevice, so we expect that it is attached to a Node
-                  uint32_t dstNode =  netDev->GetNode ()->GetId ();
-                  Simulator::ScheduleWithContext (dstNode, delay, &MultiModelSpectrumChannel::StartRx, this,
-                                                  rxParams, *rxPhyIterator);
-                }
-              else
-                {
-                  // the receiver is not attached to a NetDevice, so we cannot assume that it is attached to a node
-                  Simulator::Schedule (delay, &MultiModelSpectrumChannel::StartRx, this,
-                                       rxParams, *rxPhyIterator);
+                  m_pathLossTrace (ret.txPhy, ret.rxPhy, ret.pathLossDb);
                 }
             }
         }
+    }
+}
 
+MultiModelSpectrumChannel::ComputationResult
+MultiModelSpectrumChannel::DoComputationPsd(const Ptr<SpectrumSignalParameters> &rxParams,
+                                            const Ptr<const MobilityModel> &receiverMobility,
+                                            const Ptr<const MobilityModel> &txMobility,
+                                            const Ptr<SpectrumPhy> &rxPhy,
+                                            const Ptr<SpectrumPhy> &txPhy) const
+{
+  const Ptr<const AntennaModel> &rxAntenna = rxPhy->GetRxAntenna ();
+  ComputationResult ret;
+  ret.pathLossDb = 0;
+
+  if (rxParams->txAntenna)
+    {
+      Angles txAngles (receiverMobility->GetPosition (), txMobility->GetPosition ());
+      double txAntennaGain = rxParams->txAntenna->GetGainDb (txAngles);
+      ret.pathLossDb -= txAntennaGain;
     }
 
+  if (rxAntenna)
+    {
+      Angles rxAngles (txMobility->GetPosition (), receiverMobility->GetPosition ());
+      double rxAntennaGain = rxAntenna->GetGainDb (rxAngles);
+      ret.pathLossDb -= rxAntennaGain;
+    }
+
+  if (m_propagationLoss)
+    {
+      double propagationGainDb = m_propagationLoss->CalcRxPower (0, txMobility, receiverMobility);
+      ret.pathLossDb -= propagationGainDb;
+    }
+
+  if (ret.pathLossDb > m_maxLossDb)
+    {
+      // beyond range
+      ret.delay = MicroSeconds (0);
+    }
+  else
+    {
+      double pathGainLinear = std::pow (10.0, (-ret.pathLossDb) / 10.0);
+
+      *(rxParams->psd) *= pathGainLinear;
+
+      if (m_spectrumPropagationLoss)
+        {
+          rxParams->psd = m_spectrumPropagationLoss->CalcRxPowerSpectralDensity (rxParams->psd,
+                                                                                 txMobility, receiverMobility);
+        }
+
+      if (m_propagationDelay)
+        {
+          ret.delay = m_propagationDelay->GetDelay (txMobility, receiverMobility);
+        }
+    }
+
+  ret.rxParams = rxParams;
+  ret.rxPhy = rxPhy;
+  ret.txPhy = txPhy;
+
+  return ret;
 }
 
 void

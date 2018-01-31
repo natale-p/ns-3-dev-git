@@ -34,6 +34,8 @@
 #include <ns3/propagation-delay-model.h>
 #include <ns3/antenna-model.h>
 #include <ns3/angles.h>
+#include <stlab/concurrency/future.hpp>
+#include <stlab/concurrency/utility.hpp>
 #include <iostream>
 #include <utility>
 #include "multi-model-spectrum-channel.h"
@@ -282,6 +284,8 @@ MultiModelSpectrumChannel::StartTx (Ptr<SpectrumSignalParameters> txParams)
   NS_LOG_LOGIC ("converter map size: " << txInfoIteratorerator->second.m_spectrumConverterMap.size ());
   NS_LOG_LOGIC ("converter map first element: " << txInfoIteratorerator->second.m_spectrumConverterMap.begin ()->first);
 
+  std::vector<stlab::future<void>> futures;
+
   for (auto rxInfoIterator : m_rxSpectrumModelInfoMap)
     {
       Ptr <const SpectrumValue> convertedTxPowerSpectrum;
@@ -316,29 +320,33 @@ MultiModelSpectrumChannel::StartTx (Ptr<SpectrumSignalParameters> txParams)
                 {
                   Ptr<SpectrumSignalParameters> rxParams = txParams->Copy ();
                   rxParams->psd = Copy<SpectrumValue> (convertedTxPowerSpectrum);
-                  ComputationResult ret;
 
                   // Do computation
-                  ret = DoComputationPsd(rxParams, receiverMobility, txMobility,
-                                         rxPhy, txParams->txPhy);
+                  auto fut = Simulator::AddJob(std::bind(&ns3::MultiModelSpectrumChannel::DoComputationPsd,
+                                                         this, rxParams, receiverMobility, txMobility,
+                                                         rxPhy, txParams->txPhy));
 
-                  const Ptr<const NetDevice> &netDev = ret.rxPhy->GetDevice ();
+                  auto final_fut = fut.then([this] (const ComputationResult &ret) {
+                      const Ptr<const NetDevice> &netDev = ret.rxPhy->GetDevice ();
 
-                  if (netDev)
-                    {
-                      // the receiver has a NetDevice, so we expect that it is attached to a Node
-                      uint32_t dstNode =  netDev->GetNode ()->GetId ();
-                      Simulator::ScheduleWithContext (dstNode, ret.delay, &MultiModelSpectrumChannel::StartRx,
-                                                      this, ret.rxParams, ret.rxPhy);
-                    }
-                  else
-                    {
-                      // the receiver is not attached to a NetDevice, so we cannot assume that it is attached to a node
-                      Simulator::Schedule (ret.delay, &MultiModelSpectrumChannel::StartRx,
-                                           this, ret.rxParams, ret.rxPhy);
-                    }
+                      if (netDev)
+                        {
+                          // the receiver has a NetDevice, so we expect that it is attached to a Node
+                          uint32_t dstNode =  netDev->GetNode ()->GetId ();
+                          Simulator::ScheduleWithContext (dstNode, ret.delay, &MultiModelSpectrumChannel::StartRx,
+                                                          this, ret.rxParams, ret.rxPhy);
+                        }
+                      else
+                        {
+                          // the receiver is not attached to a NetDevice, so we cannot assume that it is attached to a node
+                          Simulator::Schedule (ret.delay, &MultiModelSpectrumChannel::StartRx,
+                                               this, ret.rxParams, ret.rxPhy);
+                        }
 
-                  m_pathLossTrace (ret.txPhy, ret.rxPhy, ret.pathLossDb);
+                      // Race condition. No mutex that protects Traces
+                      this->m_pathLossTrace (ret.txPhy, ret.rxPhy, ret.pathLossDb);
+                    });
+                  futures.push_back(final_fut);
                 }
             }
         }

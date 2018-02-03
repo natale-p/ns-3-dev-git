@@ -21,6 +21,8 @@ def options(opt):
 def configure(conf):
     conf.env['ENABLE_NSC'] = False
 
+    conf.write_config_header('ns3/internet-config.h', top=True)
+
     if Options.options.disable_nsc:
         conf.report_optional_feature("nsc", "Network Simulation Cradle", False,
                                      "disabled by user request")
@@ -294,6 +296,7 @@ def build(bld):
         'test/ipv4-rip-test.cc',
         'test/tcp-close-test.cc',
         ]
+
     privateheaders = bld(features='ns3privateheader')
     privateheaders.module = 'internet'
     privateheaders.source = [

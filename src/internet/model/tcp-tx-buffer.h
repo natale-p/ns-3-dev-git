@@ -24,51 +24,12 @@
 
 #include "ns3/object.h"
 #include "ns3/traced-value.h"
-#include "ns3/sequence-number.h"
-#include "ns3/nstime.h"
 #include "ns3/tcp-option-sack.h"
-#include "ns3/packet.h"
 
 namespace ns3 {
+
 class Packet;
-
-/**
- * \ingroup tcp
- *
- * \brief Item that encloses the application packet and some flags for it
- */
-class TcpTxItem
-{
-public:
-  // Default constructor, copy-constructor, destructor
-
-  /**
-   * \brief Print the time
-   * \param os ostream
-   */
-  void Print (std::ostream &os) const;
-
-  /**
-   * \brief Get the size in the sequence number space
-   *
-   * \return 1 if the packet size is 0 or there's no packet, otherwise the size of the packet
-   */
-  uint32_t GetSeqSize (void) const { return m_packet && m_packet->GetSize () > 0 ? m_packet->GetSize () : 1; }
-
-  SequenceNumber32 m_startSeq {0};   //!< Sequence number of the item (if transmitted)
-  Ptr<Packet> m_packet {nullptr};    //!< Application packet (can be null)
-  bool m_lost          {false};      //!< Indicates if the segment has been lost (RTO)
-  bool m_retrans       {false};      //!< Indicates if the segment is retransmitted
-  Time m_lastSent      {Time::Min()};//!< Timestamp of the time at which the segment has been sent last time
-  bool m_sacked        {false};      //!< Indicates if the segment has been SACKed
-
-  // For Rate Sample. Each value is the value at the time the packet was sent
-  Time m_firstTxStamp  {Seconds (0)};//!< Start of send pipeline phase
-  Time m_deliveredStamp{Seconds (0)};//!< When we reached the "delivered" count
-  uint64_t m_delivered {0};          //!< Bytes S/ACKed, incl retrans
-  bool m_isAppLimited  {false};      //!< Connection is app limited?
-};
-
+class TcpTxItem;
 /**
  * \ingroup tcp
  *

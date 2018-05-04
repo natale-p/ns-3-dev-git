@@ -22,66 +22,17 @@
 #include <algorithm>
 #include <iostream>
 
-#include "ns3/packet.h"
 #include "ns3/log.h"
 #include "ns3/abort.h"
 #include "ns3/tcp-option-ts.h"
+#include "ns3/packet.h"
 
 #include "tcp-tx-buffer.h"
+#include "tcp-tx-item.h"
 
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
-
-void
-TcpTxItem::Print (std::ostream &os) const
-{
-  bool comma = false;
-  os << "[" << m_startSeq << ";" << m_startSeq + GetSeqSize () << "|"
-     << GetSeqSize () << "]";
-
-  if (m_lost)
-    {
-      os << "[lost]";
-      comma = true;
-    }
-  if (m_retrans)
-    {
-      if (comma)
-        {
-          os << ",";
-        }
-
-      os << "[retrans]";
-      comma = true;
-    }
-  if (m_sacked)
-    {
-      if (comma)
-        {
-          os << ",";
-        }
-      os << "[sacked]";
-      comma = true;
-    }
-  if (comma)
-    {
-      os << ",";
-    }
-  os << "[" << m_lastSent.GetSeconds () << "]";
-  os << "[" << m_firstTxStamp.GetSeconds () << "]";
-  os << "[" << m_deliveredStamp.GetSeconds () << "]";
-  os << "[" << m_delivered << "]";
-  if (m_isAppLimited)
-    {
-      os << "[is_app_limited]";
-    }
-  else
-    {
-      os << "[]";
-    }
-}
-
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);
 
 TypeId

@@ -55,12 +55,18 @@ public:
    */
   uint32_t GetSeqSize (void) const { return m_packet && m_packet->GetSize () > 0 ? m_packet->GetSize () : 1; }
 
-  SequenceNumber32 m_startSeq {0};     //!< Sequence number of the item (if transmitted)
+  SequenceNumber32 m_startSeq {0};   //!< Sequence number of the item (if transmitted)
   Ptr<Packet> m_packet {nullptr};    //!< Application packet (can be null)
   bool m_lost          {false};      //!< Indicates if the segment has been lost (RTO)
   bool m_retrans       {false};      //!< Indicates if the segment is retransmitted
   Time m_lastSent      {Time::Min()};//!< Timestamp of the time at which the segment has been sent last time
   bool m_sacked        {false};      //!< Indicates if the segment has been SACKed
+
+  // For Rate Sample. Each value is the value at the time the packet was sent
+  Time m_firstTxStamp  {Seconds (0)};//!< Start of send pipeline phase
+  Time m_deliveredStamp{Seconds (0)};//!< When we reached the "delivered" count
+  uint64_t m_delivered {0};          //!< Bytes S/ACKed, incl retrans
+  bool m_isAppLimited  {false};      //!< Connection is app limited?
 };
 
 /**

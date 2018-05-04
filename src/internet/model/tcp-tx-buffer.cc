@@ -69,6 +69,17 @@ TcpTxItem::Print (std::ostream &os) const
       os << ",";
     }
   os << "[" << m_lastSent.GetSeconds () << "]";
+  os << "[" << m_firstTxStamp.GetSeconds () << "]";
+  os << "[" << m_deliveredStamp.GetSeconds () << "]";
+  os << "[" << m_delivered << "]";
+  if (m_isAppLimited)
+    {
+      os << "[is_app_limited]";
+    }
+  else
+    {
+      os << "[]";
+    }
 }
 
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);

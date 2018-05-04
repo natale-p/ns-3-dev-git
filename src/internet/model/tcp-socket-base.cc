@@ -55,6 +55,7 @@
 #include "tcp-option-sack.h"
 #include "tcp-congestion-ops.h"
 #include "tcp-recovery-ops.h"
+#include "tcp-tx-item.h"
 
 #include <math.h>
 #include <algorithm>
@@ -267,23 +268,23 @@ TcpSocketState::GetTypeId (void)
 
 TcpSocketState::TcpSocketState (const TcpSocketState &other)
   : Object (other),
-    m_cWnd (other.m_cWnd),
-    m_ssThresh (other.m_ssThresh),
-    m_initialCWnd (other.m_initialCWnd),
-    m_initialSsThresh (other.m_initialSsThresh),
-    m_segmentSize (other.m_segmentSize),
-    m_lastAckedSeq (other.m_lastAckedSeq),
-    m_congState (other.m_congState),
-    m_highTxMark (other.m_highTxMark),
-    m_nextTxSequence (other.m_nextTxSequence),
-    m_rcvTimestampValue (other.m_rcvTimestampValue),
-    m_rcvTimestampEchoReply (other.m_rcvTimestampEchoReply),
-    m_pacing (other.m_pacing),
-    m_maxPacingRate (other.m_maxPacingRate),
-    m_currentPacingRate (other.m_currentPacingRate),
-    m_minRtt (other.m_minRtt),
-    m_bytesInFlight (other.m_bytesInFlight),
-    m_lastRtt (other.m_lastRtt)
+  m_cWnd (other.m_cWnd),
+  m_ssThresh (other.m_ssThresh),
+  m_initialCWnd (other.m_initialCWnd),
+  m_initialSsThresh (other.m_initialSsThresh),
+  m_segmentSize (other.m_segmentSize),
+  m_lastAckedSeq (other.m_lastAckedSeq),
+  m_congState (other.m_congState),
+  m_highTxMark (other.m_highTxMark),
+  m_nextTxSequence (other.m_nextTxSequence),
+  m_rcvTimestampValue (other.m_rcvTimestampValue),
+  m_rcvTimestampEchoReply (other.m_rcvTimestampEchoReply),
+  m_pacing (other.m_pacing),
+  m_maxPacingRate (other.m_maxPacingRate),
+  m_currentPacingRate (other.m_currentPacingRate),
+  m_minRtt (other.m_minRtt),
+  m_bytesInFlight (other.m_bytesInFlight),
+  m_lastRtt (other.m_lastRtt)
 {
 }
 
@@ -341,51 +342,51 @@ TcpSocketBase::TcpSocketBase (void)
 
 TcpSocketBase::TcpSocketBase (const TcpSocketBase& sock)
   : TcpSocket (sock),
-    //copy object::m_tid and socket::callbacks
-    m_dupAckCount (sock.m_dupAckCount),
-    m_delAckCount (0),
-    m_delAckMaxCount (sock.m_delAckMaxCount),
-    m_noDelay (sock.m_noDelay),
-    m_synCount (sock.m_synCount),
-    m_synRetries (sock.m_synRetries),
-    m_dataRetrCount (sock.m_dataRetrCount),
-    m_dataRetries (sock.m_dataRetries),
-    m_rto (sock.m_rto),
-    m_minRto (sock.m_minRto),
-    m_clockGranularity (sock.m_clockGranularity),
-    m_delAckTimeout (sock.m_delAckTimeout),
-    m_persistTimeout (sock.m_persistTimeout),
-    m_cnTimeout (sock.m_cnTimeout),
-    m_endPoint (nullptr),
-    m_endPoint6 (nullptr),
-    m_node (sock.m_node),
-    m_tcp (sock.m_tcp),
-    m_state (sock.m_state),
-    m_errno (sock.m_errno),
-    m_closeNotified (sock.m_closeNotified),
-    m_closeOnEmpty (sock.m_closeOnEmpty),
-    m_shutdownSend (sock.m_shutdownSend),
-    m_shutdownRecv (sock.m_shutdownRecv),
-    m_connected (sock.m_connected),
-    m_msl (sock.m_msl),
-    m_maxWinSize (sock.m_maxWinSize),
-    m_bytesAckedNotProcessed (sock.m_bytesAckedNotProcessed),
-    m_rWnd (sock.m_rWnd),
-    m_highRxMark (sock.m_highRxMark),
-    m_highRxAckMark (sock.m_highRxAckMark),
-    m_sackEnabled (sock.m_sackEnabled),
-    m_winScalingEnabled (sock.m_winScalingEnabled),
-    m_rcvWindShift (sock.m_rcvWindShift),
-    m_sndWindShift (sock.m_sndWindShift),
-    m_timestampEnabled (sock.m_timestampEnabled),
-    m_timestampToEcho (sock.m_timestampToEcho),
-    m_recover (sock.m_recover),
-    m_retxThresh (sock.m_retxThresh),
-    m_limitedTx (sock.m_limitedTx),
-    m_isFirstPartialAck (sock.m_isFirstPartialAck),
-    m_txTrace (sock.m_txTrace),
-    m_rxTrace (sock.m_rxTrace),
-    m_pacingTimer (Timer::REMOVE_ON_DESTROY)
+  //copy object::m_tid and socket::callbacks
+  m_dupAckCount (sock.m_dupAckCount),
+  m_delAckCount (0),
+  m_delAckMaxCount (sock.m_delAckMaxCount),
+  m_noDelay (sock.m_noDelay),
+  m_synCount (sock.m_synCount),
+  m_synRetries (sock.m_synRetries),
+  m_dataRetrCount (sock.m_dataRetrCount),
+  m_dataRetries (sock.m_dataRetries),
+  m_rto (sock.m_rto),
+  m_minRto (sock.m_minRto),
+  m_clockGranularity (sock.m_clockGranularity),
+  m_delAckTimeout (sock.m_delAckTimeout),
+  m_persistTimeout (sock.m_persistTimeout),
+  m_cnTimeout (sock.m_cnTimeout),
+  m_endPoint (nullptr),
+  m_endPoint6 (nullptr),
+  m_node (sock.m_node),
+  m_tcp (sock.m_tcp),
+  m_state (sock.m_state),
+  m_errno (sock.m_errno),
+  m_closeNotified (sock.m_closeNotified),
+  m_closeOnEmpty (sock.m_closeOnEmpty),
+  m_shutdownSend (sock.m_shutdownSend),
+  m_shutdownRecv (sock.m_shutdownRecv),
+  m_connected (sock.m_connected),
+  m_msl (sock.m_msl),
+  m_maxWinSize (sock.m_maxWinSize),
+  m_bytesAckedNotProcessed (sock.m_bytesAckedNotProcessed),
+  m_rWnd (sock.m_rWnd),
+  m_highRxMark (sock.m_highRxMark),
+  m_highRxAckMark (sock.m_highRxAckMark),
+  m_sackEnabled (sock.m_sackEnabled),
+  m_winScalingEnabled (sock.m_winScalingEnabled),
+  m_rcvWindShift (sock.m_rcvWindShift),
+  m_sndWindShift (sock.m_sndWindShift),
+  m_timestampEnabled (sock.m_timestampEnabled),
+  m_timestampToEcho (sock.m_timestampToEcho),
+  m_recover (sock.m_recover),
+  m_retxThresh (sock.m_retxThresh),
+  m_limitedTx (sock.m_limitedTx),
+  m_isFirstPartialAck (sock.m_isFirstPartialAck),
+  m_txTrace (sock.m_txTrace),
+  m_rxTrace (sock.m_rxTrace),
+  m_pacingTimer (Timer::REMOVE_ON_DESTROY)
 {
   NS_LOG_FUNCTION (this);
   NS_LOG_LOGIC ("Invoked the copy constructor");
@@ -840,6 +841,11 @@ TcpSocketBase::Send (Ptr<Packet> p, uint32_t flags)
         { // TxBuffer overflow, send failed
           m_errno = ERROR_MSGSIZE;
           return -1;
+        }
+      else
+        {
+          // TODO: Documentation of m_app_limited
+          m_app_limited = RateCheckAppLimited ();
         }
       if (m_shutdownSend)
         {
@@ -1468,7 +1474,7 @@ TcpSocketBase::IsTcpOptionEnabled (uint8_t kind) const
 }
 
 void
-TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated)
+TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader, uint32_t *byteSacked)
 {
   NS_LOG_FUNCTION (this << tcpHeader);
   TcpHeader::TcpOptionList::const_iterator it;
@@ -1482,7 +1488,7 @@ TcpSocketBase::ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated)
       switch (option->GetKind ())
         {
         case TcpOption::SACK:
-          scoreboardUpdated = ProcessOptionSack (option);
+          *byteSacked = ProcessOptionSack (option);
           break;
         default:
           continue;
@@ -1507,7 +1513,7 @@ TcpSocketBase::EnterRecovery ()
     }
   else
     {
-      if (! m_txBuffer->IsLost (m_txBuffer->HeadSequence ()))
+      if (!m_txBuffer->IsLost (m_txBuffer->HeadSequence ()))
         {
           // We received 3 dupacks, but the head is not marked as lost
           // (received less than 3 SACK block ahead).
@@ -1584,11 +1590,11 @@ TcpSocketBase::DupAck ()
   if (m_tcb->m_congState == TcpSocketState::CA_RECOVERY)
     {
       if (!m_sackEnabled)
-      {
-        // If we are in recovery and we receive a dupack, one segment
-        // has left the network. This is equivalent to a SACK of one block.
-        m_txBuffer->AddRenoSack ();
-      }
+        {
+          // If we are in recovery and we receive a dupack, one segment
+          // has left the network. This is equivalent to a SACK of one block.
+          m_txBuffer->AddRenoSack ();
+        }
       if (!m_congestionControl->HasCongControl ())
         {
           m_recoveryOps->DoRecovery (m_tcb);
@@ -1648,16 +1654,33 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
   // RFC 6675, Section 5, 1st paragraph:
   // Upon the receipt of any ACK containing SACK information, the
   // scoreboard MUST be updated via the Update () routine (done in ReadOptions)
-  bool scoreboardUpdated = false;
-  ReadOptions (tcpHeader, scoreboardUpdated);
+  uint32_t bytesSacked = 0;
+  uint32_t previousLost = m_txBuffer->GetLost ();
+
+  ReadOptions (tcpHeader, &bytesSacked);
 
   SequenceNumber32 ackNumber = tcpHeader.GetAckNumber ();
   SequenceNumber32 oldHeadSequence = m_txBuffer->HeadSequence ();
-  m_txBuffer->DiscardUpTo (ackNumber);
+
+  m_txBuffer->DiscardUpTo (ackNumber, MakeCallback (&TcpSocketBase::RateSkbDelivered, this));
+  uint32_t currentLost = m_txBuffer->GetLost ();
 
   // RFC 6675 Section 5: 2nd, 3rd paragraph and point (A), (B) implementation
   // are inside the function ProcessAck
-  ProcessAck (ackNumber, scoreboardUpdated, oldHeadSequence);
+  uint32_t bytesAcked = ProcessAck (ackNumber, (bytesSacked > 0), oldHeadSequence);
+
+  NS_ASSERT ((bytesAcked > 0 && bytesSacked == 0) || (bytesAcked == 0 && bytesSacked > 0) ||
+             (bytesAcked == 0 && bytesSacked == 0));
+
+  if (currentLost > previousLost)
+    {
+      RateGen (std::max (bytesAcked, bytesSacked), currentLost - previousLost, false);
+    }
+  else
+    {
+      RateGen (std::max (bytesAcked, bytesSacked), previousLost - currentLost, false);
+    }
+
 
   // If there is any data piggybacked, store it into m_rxBuffer
   if (packet->GetSize () > 0)
@@ -1670,7 +1693,7 @@ TcpSocketBase::ReceivedAck (Ptr<Packet> packet, const TcpHeader& tcpHeader)
   SendPendingData (m_connected);
 }
 
-void
+uint32_t
 TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpdated,
                            const SequenceNumber32 &oldHeadSequence)
 {
@@ -1678,6 +1701,7 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
   // RFC 6675, Section 5, 2nd paragraph:
   // If the incoming ACK is a cumulative acknowledgment, the TCP MUST
   // reset DupAcks to zero.
+  uint32_t bytesAcked = 0;
   bool exitedFastRecovery = false;
   uint32_t oldDupAckCount = m_dupAckCount; // remember the old value
   m_tcb->m_lastAckedSeq = ackNumber; // Update lastAckedSeq
@@ -1700,9 +1724,9 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
    */
 
   bool isDupack = m_sackEnabled ?
-        scoreboardUpdated
-      : ackNumber == oldHeadSequence &&
-        ackNumber < m_tcb->m_highTxMark;
+    scoreboardUpdated
+    : ackNumber == oldHeadSequence &&
+    ackNumber < m_tcb->m_highTxMark;
 
   NS_LOG_DEBUG ("ACK of " << ackNumber <<
                 " SND.UNA=" << oldHeadSequence <<
@@ -1725,7 +1749,7 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
       && ackNumber == m_tcb->m_highTxMark)
     {
       // Dupack, but the ACK is precisely equal to the nextTxSequence
-      return;
+      return bytesAcked;
     }
   else if (ackNumber == oldHeadSequence
            && ackNumber > m_tcb->m_highTxMark)
@@ -1744,7 +1768,7 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
     {
       // Please remember that, with SACK, we can enter here even if we
       // received a dupack.
-      uint32_t bytesAcked = ackNumber - oldHeadSequence;
+      bytesAcked = ackNumber - oldHeadSequence;
       uint32_t segsAcked  = bytesAcked / m_tcb->m_segmentSize;
       m_bytesAckedNotProcessed += bytesAcked % m_tcb->m_segmentSize;
 
@@ -1937,6 +1961,7 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
             }
         }
     }
+  return bytesAcked;
 }
 
 /* Received a packet upon LISTEN state. */
@@ -2691,6 +2716,150 @@ TcpSocketBase::AddSocketTags (const Ptr<Packet> &p) const
       p->ReplacePacketTag (priorityTag);
     }
 }
+
+void
+TcpSocketBase::RateGen (uint32_t delivered, uint32_t lost, bool is_sack_reneg)
+{
+  NS_LOG_FUNCTION (this << delivered << lost << is_sack_reneg);
+  /* Clear app limited if bubble is acked and gone. */
+  if (m_app_limited && m_delivered > m_app_limited)
+    {
+      m_app_limited = 0;
+    }
+
+  if (delivered)
+    {
+      m_delivered_mstamp = Simulator::Now ();
+    }
+
+  m_rateSample.m_acked_sacked = delivered;         /* freshly ACKed or SACKed */
+  m_rateSample.m_losses = lost;                    /* freshly marked lost */
+  /* Return an invalid sample if no timing information is available or
+   * in recovery from loss with SACK reneging. Rate samples taken during
+   * a SACK reneging event may overestimate bw by including packets that
+   * were SACKed before the reneg.
+   */
+  if (m_rateSample.m_prior_mstamp == Time::Max () || is_sack_reneg)
+    {
+      m_rateSample.m_delivered = -1;
+      m_rateSample.m_interval = Time::Max ();
+      return;
+    }
+
+  m_rateSample.m_delivered = m_delivered - m_rateSample.m_prior_delivered;
+
+  /* Model sending data and receiving ACKs as separate pipeline phases
+   * for a window. Usually the ACK phase is longer, but with ACK
+   * compression the send phase can be longer. To be safe we use the
+   * longer phase.
+   */
+  auto snd_us = m_rateSample.m_interval;  /* send phase */
+  auto ack_us = Simulator::Now () - m_rateSample.m_prior_mstamp;
+  m_rateSample.m_interval = std::max (snd_us, ack_us);
+
+  /* Normally we expect interval_us >= min-rtt.
+   * Note that rate may still be over-estimated when a spuriously
+   * retransmistted skb was first (s)acked because "interval_us"
+   * is under-estimated (up to an RTT). However continuously
+   * measuring the delivery rate during loss recovery is crucial
+   * for connections suffer heavy or prolonged losses.
+   */
+  if (m_rateSample.m_interval < m_tcb->m_minRtt)
+    {
+      m_rateSample.m_interval = Time::Max ();
+      return;
+    }
+
+  /* Record the last non-app-limited or the highest app-limited bw */
+  if (!m_rateSample.m_is_app_limited ||
+      (m_rateSample.m_delivered * m_rate_interval >=
+       m_rate_delivered * m_rateSample.m_interval))
+    {
+      m_rate_delivered = m_rateSample.m_delivered;
+      m_rate_interval = m_rateSample.m_interval;
+      m_rate_app_limited = m_rateSample.m_is_app_limited;
+    }
+}
+
+uint32_t
+TcpSocketBase::RateCheckAppLimited () const
+{
+  NS_LOG_FUNCTION (this);
+  if (      /* We have less than one packet to send. */
+    m_txBuffer->SizeFromSequence (m_tcb->m_nextTxSequence) < m_tcb->m_segmentSize &&
+    /* Nothing in sending host's qdisc queues or NIC tx queue. NOT IMPLEMENTED */
+    /* We are not limited by CWND. */
+    m_tcb->m_bytesInFlight < m_tcb->m_cWnd &&
+    /* All lost packets have been retransmitted. */
+    m_txBuffer->GetLost () <= m_txBuffer->GetRetransmitsCount ())
+    {
+      return std::max (m_delivered + m_tcb->m_bytesInFlight.Get (), 1U);
+    }
+
+  return 1;
+}
+
+void
+TcpSocketBase::RateSkbDelivered (TcpTxItem *skb)
+{
+  NS_LOG_FUNCTION (this << skb->m_startSeq);
+
+  if (skb->m_deliveredStamp == Time::Max ())
+    return;
+
+  if (!m_rateSample.m_prior_delivered ||
+      skb->m_delivered > m_rateSample.m_prior_delivered)
+    {
+      m_rateSample.m_prior_delivered = skb->m_delivered;
+      m_rateSample.m_prior_mstamp = skb->m_deliveredStamp;
+      m_rateSample.m_is_app_limited = skb->m_isAppLimited;
+      m_rateSample.m_is_retrans = skb->m_retrans;
+
+      /* Find the duration of the "send phase" of this window: */
+      m_rateSample.m_interval = skb->m_lastSent - skb->m_firstTxStamp;
+      /* Record send time of most recently ACKed packet: */
+      m_first_tx_mstamp  = skb->m_lastSent;
+    }
+  /* Mark off the skb delivered once it's sacked to avoid being
+   * used again when it's cumulatively acked. For acked packets
+   * we don't need to reset since it'll be freed soon.
+   */
+  if (skb->m_sacked)
+    {
+      skb->m_deliveredStamp = Time::Max ();
+    }
+}
+
+void
+TcpSocketBase::RateSkbSent (TcpTxItem *skb)
+{
+  NS_LOG_FUNCTION (this << skb->m_startSeq);
+  /* In general we need to start delivery rate samples from the
+   * time we received the most recent ACK, to ensure we include
+   * the full time the network needs to deliver all in-flight
+   * packets. If there are no packets in flight yet, then we
+   * know that any ACKs after now indicate that the network was
+   * able to deliver those packets completely in the sampling
+   * interval between now and the next ACK.
+   *
+   * Note that we use the entire window size instead of bytes_in_flight
+   * because the latter is a guess based on RTO and loss-marking
+   * heuristics. We don't want spurious RTOs or loss markings to cause
+   * a spuriously small time interval, causing a spuriously high
+   * bandwidth estimate.
+   */
+  if (m_txBuffer->GetSentSize () == 0)
+    {
+      m_first_tx_mstamp  = Simulator::Now ();
+      m_delivered_mstamp = Simulator::Now ();
+    }
+
+  skb->m_firstTxStamp   = m_first_tx_mstamp;
+  skb->m_deliveredStamp = m_delivered_mstamp;
+  skb->m_delivered      = m_delivered;
+  skb->m_isAppLimited   = m_app_limited ? true : false;
+}
+
 /* Extract at most maxSize bytes from the TxBuffer at sequence seq, add the
     TCP header, and send to TcpL4Protocol */
 uint32_t
@@ -2704,7 +2873,10 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
       isRetransmission = true;
     }
 
-  Ptr<Packet> p = m_txBuffer->CopyFromSequence (maxSize, seq);
+  TcpTxItem *skbToSend = m_txBuffer->CopyFromSequence (maxSize, seq);
+  RateSkbSent (skbToSend);
+
+  Ptr<Packet> p = skbToSend->m_packet->Copy ();
   uint32_t sz = p->GetSize (); // Size of packet
   uint8_t flags = withAck ? TcpHeader::ACK : 0;
   uint32_t remainingData = m_txBuffer->SizeFromSequence (seq + SequenceNumber32 (sz));
@@ -3382,7 +3554,8 @@ TcpSocketBase::PersistTimeout ()
 {
   NS_LOG_LOGIC ("PersistTimeout expired at " << Simulator::Now ().GetSeconds ());
   m_persistTimeout = std::min (Seconds (60), Time (2 * m_persistTimeout)); // max persist timeout = 60s
-  Ptr<Packet> p = m_txBuffer->CopyFromSequence (1, m_tcb->m_nextTxSequence);
+  TcpTxItem *skbToSend = m_txBuffer->CopyFromSequence (1, m_tcb->m_nextTxSequence);
+  Ptr<Packet> p = skbToSend->m_packet->Copy ();
   m_txBuffer->ResetLastSegmentSent ();
   TcpHeader tcpHeader;
   tcpHeader.SetSequenceNumber (m_tcb->m_nextTxSequence);
@@ -3714,7 +3887,7 @@ TcpSocketBase::AddOptionWScale (TcpHeader &header)
                static_cast<int> (m_rcvWindShift));
 }
 
-bool
+uint32_t
 TcpSocketBase::ProcessOptionSack (const Ptr<const TcpOption> option)
 {
   NS_LOG_FUNCTION (this << option);
@@ -4001,17 +4174,17 @@ TcpSocketBase::NotifyPacingPerformed (void)
 //RttHistory methods
 RttHistory::RttHistory (SequenceNumber32 s, uint32_t c, Time t)
   : seq (s),
-    count (c),
-    time (t),
-    retx (false)
+  count (c),
+  time (t),
+  retx (false)
 {
 }
 
 RttHistory::RttHistory (const RttHistory& h)
   : seq (h.seq),
-    count (h.count),
-    time (h.time),
-    retx (h.retx)
+  count (h.count),
+  time (h.time),
+  retx (h.retx)
 {
 }
 

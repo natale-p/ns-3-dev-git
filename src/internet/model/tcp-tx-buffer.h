@@ -209,6 +209,12 @@ public:
   uint32_t GetSacked (void) const { return m_sackedOut; }
 
   /**
+   * \brief Get the number of bytes sent and not yet ACKed.
+   * \return the number of sent segment.
+   */
+  uint32_t GetSentSize (void) const { return m_sentSize; }
+
+  /**
    * \brief Append a data packet to the end of the buffer
    *
    * \param p The packet to be appended to the Tx buffer
@@ -241,9 +247,9 @@ public:
    *
    * \param numBytes number of bytes to copy
    * \param seq start sequence number to extract
-   * \returns a packet
+   * \returns a pointer to the item to be sent. Please, do not delete the pointer.
    */
-  Ptr<Packet> CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
+  TcpTxItem* CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
 
   /**
    * \brief Set the head sequence of the buffer
@@ -259,15 +265,18 @@ public:
    *
    * \param seq The first sequence number to maintain after discarding all the
    * previous sequences.
+   * \param rateUpdate Callback to invoke just before each item is deleted
+   * from the queue, to extract information.
    */
-  void DiscardUpTo (const SequenceNumber32& seq);
+  void DiscardUpTo (const SequenceNumber32& seq,
+                    const Callback<void, TcpTxItem*> &rateUpdate);
 
   /**
    * \brief Update the scoreboard
    * \param list list of SACKed blocks
-   * \returns true in case of an update
+   * \returns the number of bytes updated with the 'sack' flag
    */
-  bool Update (const TcpOptionSack::SackList &list);
+  uint32_t Update (const TcpOptionSack::SackList &list);
 
   /**
    * \brief Check if a segment is lost

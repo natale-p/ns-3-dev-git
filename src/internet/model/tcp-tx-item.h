@@ -57,8 +57,8 @@ public:
   bool m_sacked        {false};      //!< Indicates if the segment has been SACKed
 
   // For Rate Sample. Each value is the value at the time the packet was sent
-  Time m_firstTxStamp  {Seconds (0)};//!< Start of send pipeline phase
-  Time m_deliveredStamp{Seconds (0)};//!< When we reached the "delivered" count
+  Time m_firstTxStamp  {Time::Max ()};//!< Start of send pipeline phase
+  Time m_deliveredStamp{Time::Max ()};//!< When we reached the "delivered" count
   uint64_t m_delivered {0};          //!< Bytes S/ACKed, incl retrans
   bool m_isAppLimited  {false};      //!< Connection is app limited?
 };

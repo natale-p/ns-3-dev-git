@@ -232,17 +232,17 @@ public:
  * A sample is invalid if "delivered" or "interval_us" is negative.
  */
 struct TcpRateSample {
-	Time      m_prior_mstamp;    //!< starting timestamp for interval
-	uint32_t  m_prior_delivered; //!< tp->delivered at "prior_mstamp"
-	int32_t   m_delivered;       //!< number of packets delivered over interval
-	Time      m_interval;        //!< time for tp->delivered to incr "delivered"
-	Time      m_rtt;             //!< RTT of last (S)ACKed packet (or -1)
-	int       m_losses;          //!< number of packets marked lost upon ACK
-	uint32_t  m_acked_sacked;    //!< number of packets newly (S)ACKed upon ACK
-	uint32_t  m_prior_in_flight; //!< in flight before this ACK
-	bool      m_is_app_limited;  //!< is sample from packet with bubble in pipe?
-	bool      m_is_retrans;	     //!< is sample from retransmission?
-	bool      m_is_ack_delayed;  //!< is this (likely) a delayed ACK?
+  Time      m_prior_mstamp {Time::Max ()};         //!< starting timestamp for interval
+  uint64_t  m_prior_delivered {0};           //!< tp->delivered at "prior_mstamp"
+  int32_t   m_delivered       {0};           //!< number of packets delivered over interval
+  Time      m_interval        {Time::Max ()};      //!< time for tp->delivered to incr "delivered"
+  Time      m_rtt             {Time::Max ()};      //!< RTT of last (S)ACKed packet (or -1)
+  int       m_losses          {-1};          //!< number of packets marked lost upon ACK
+  uint32_t  m_acked_sacked    {0};           //!< number of packets newly (S)ACKed upon ACK
+  uint32_t  m_prior_in_flight {0};           //!< in flight before this ACK
+  bool      m_is_app_limited  {false};       //!< is sample from packet with bubble in pipe?
+  bool      m_is_retrans      {false};       //!< is sample from retransmission?
+  bool      m_is_ack_delayed  {false};       //!< is this (likely) a delayed ACK?
 };
 
 /**
@@ -1012,9 +1012,10 @@ protected:
    * \param scoreboardUpdated if true indicates that the scoreboard has been
    * \param oldHeadSequence value of HeadSequence before ack
    * updated with SACK information
+   * \return the number of bytes acked, or 0 if it is a dupack
    */
-  virtual void ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpdated,
-                           const SequenceNumber32 &oldHeadSequence);
+  virtual uint32_t ProcessAck(const SequenceNumber32 &ackNumber, bool scoreboardUpdated,
+                              const SequenceNumber32 &oldHeadSequence);
 
   /**
    * \brief Recv of a data, put into buffer, call L7 to get it if necessary
@@ -1098,10 +1099,10 @@ protected:
    * Timestamp and Window scale are managed in other pieces of code.
    *
    * \param tcpHeader Header of the segment
-   * \param scoreboardUpdated indicates if the scoreboard was updated due to a
-   * SACK option
+   * \param blocksUpdated [in] here will be placed the number of bytes updated
+   * with the SACK flag
    */
-  void ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated);
+  void ReadOptions (const TcpHeader &tcpHeader, uint32_t *byteSacked);
 
   /**
    * \brief Return true if the specified option is enabled
@@ -1153,9 +1154,9 @@ protected:
    * \brief Read the SACK option
    *
    * \param option SACK option from the header
-   * \returns true in case of an update to the SACKed blocks
+   * \returns the number of blocks updated with the SACK flag
    */
-  bool ProcessOptionSack (const Ptr<const TcpOption> option);
+  uint32_t ProcessOptionSack (const Ptr<const TcpOption> option);
 
   /**
    * \brief Add the SACK PERMITTED option to the header
@@ -1214,6 +1215,36 @@ protected:
    * \param p Packet
    */
   void AddSocketTags (const Ptr<Packet> &p) const;
+
+  /**
+   * \brief Put the rate information inside the sent skb
+   *
+   * Snapshot the current delivery information in the skb, to generate
+   * a rate sample later when the skb is (s)acked in RateSkbDelivered ().
+   */
+  void RateSkbSent (TcpTxItem *skb);
+
+  /**
+   *
+   * \brief Update the Rate information after an item is received
+   *
+   * When an skb is sacked or acked, we fill in the rate sample with the (prior)
+   * delivery information when the skb was last transmitted.
+   *
+   * If an ACK (s)acks multiple skbs (e.g., stretched-acks), this function is
+   * called multiple times. We favor the information from the most recently
+   * sent skb, i.e., the skb with the highest prior_delivered count.
+   */
+  void RateSkbDelivered (TcpTxItem *skb);
+
+  /**
+   * \brief If a gap is detected between sends, it means we are app-limited.
+   * \return TODO What the Linux kernel is setting in tp->app_limited?
+   * https://elixir.bootlin.com/linux/latest/source/net/ipv4/tcp_rate.c#L177
+   */
+  uint32_t RateCheckAppLimited () const;
+
+  void RateGen (uint32_t delivered, uint32_t lost, bool is_sack_reneg);
 
 protected:
   // Counters and events
@@ -1313,6 +1344,17 @@ protected:
 
   // Pacing related variable
   Timer m_pacingTimer {Timer::REMOVE_ON_DESTROY}; //!< Pacing Event
+
+  // Rate sample related variables
+  uint32_t  m_delivered        {0}; //!< Total data packets delivered incl. rexmits
+  uint32_t  m_lost             {0}; //!< Total data packets lost incl. rexmits
+  uint32_t  m_app_limited      {0}; //!< limited until "delivered" reaches this val
+  Time      m_first_tx_mstamp  {};  //!< start of window send phase
+  Time      m_delivered_mstamp {};  //!< time we reached "delivered"
+  uint32_t  m_rate_delivered   {0}; //!< saved rate sample: packets delivered
+  Time      m_rate_interval    {};  //!< saved rate sample: time elapsed
+  bool      m_rate_app_limited {false}; //!< rate_{delivered,interval_us} limited?
+  TcpRateSample m_rateSample;
 };
 
 /**

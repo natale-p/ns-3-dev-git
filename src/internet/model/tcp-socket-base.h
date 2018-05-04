@@ -220,6 +220,32 @@ public:
 };
 
 /**
+ *
+ * \brief Rate Sample structure
+ *
+ * A rate sample measures the number of (original/retransmitted) data
+ * packets delivered "delivered" over an interval of time "interval_us".
+ * The tcp_rate code fills in the rate sample, and congestion
+ * control modules that define a cong_control function to run at the end
+ * of ACK processing can optionally chose to consult this sample when
+ * setting cwnd and pacing rate.
+ * A sample is invalid if "delivered" or "interval_us" is negative.
+ */
+struct TcpRateSample {
+	Time      m_prior_mstamp;    //!< starting timestamp for interval
+	uint32_t  m_prior_delivered; //!< tp->delivered at "prior_mstamp"
+	int32_t   m_delivered;       //!< number of packets delivered over interval
+	Time      m_interval;        //!< time for tp->delivered to incr "delivered"
+	Time      m_rtt;             //!< RTT of last (S)ACKed packet (or -1)
+	int       m_losses;          //!< number of packets marked lost upon ACK
+	uint32_t  m_acked_sacked;    //!< number of packets newly (S)ACKed upon ACK
+	uint32_t  m_prior_in_flight; //!< in flight before this ACK
+	bool      m_is_app_limited;  //!< is sample from packet with bubble in pipe?
+	bool      m_is_retrans;	     //!< is sample from retransmission?
+	bool      m_is_ack_delayed;  //!< is this (likely) a delayed ACK?
+};
+
+/**
  * \ingroup socket
  * \ingroup tcp
  *

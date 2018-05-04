@@ -102,7 +102,11 @@ public:
    * \param tcb internal congestion state
    * \param segmentsAcked count of segments acked
    */
-  virtual void IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked) = 0;
+  virtual void IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
+  {
+    NS_UNUSED (tcb);
+    NS_UNUSED (segmentsAcked);
+  }
 
   /**
    * \brief Timing information on received ACK
@@ -155,6 +159,30 @@ public:
     NS_UNUSED (tcb);
     NS_UNUSED (event);
   }
+
+  /**
+   * \brief Returns true when Congestion Control Algorithm implements CongControl
+   */
+  virtual bool HasCongControl () const
+  {
+    return false;
+  }
+
+  /**
+   * \brief Called when packets are delivered to update cwnd and pacing rate
+   *
+   * This function mimics the function cong_control in Linux. It is allowed to
+   * change directly cWnd and pacing rate.
+   *
+   * \param tcb internal congestion state
+   * \param rs RateSample sample
+   */
+  virtual void CongControl (Ptr<TcpSocketState> tcb, const TcpRateSample & rs)
+  {
+    NS_UNUSED (tcb);
+    NS_UNUSED (rs);
+  }
+
   // Present in Linux but not in ns-3 yet:
   /* call when ack arrives (optional) */
   // void (*in_ack_event)(struct sock *sk, u32 flags);

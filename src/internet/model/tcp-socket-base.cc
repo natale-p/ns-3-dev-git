@@ -1529,12 +1529,14 @@ TcpSocketBase::EnterRecovery ()
   // compatibility with old ns-3 versions
   uint32_t bytesInFlight = m_sackEnabled ? BytesInFlight () : BytesInFlight () + m_tcb->m_segmentSize;
   m_tcb->m_ssThresh = m_congestionControl->GetSsThresh (m_tcb, bytesInFlight);
-  m_recoveryOps->EnterRecovery (m_tcb, m_dupAckCount);
-
-  NS_LOG_INFO (m_dupAckCount << " dupack. Enter fast recovery mode." <<
-               "Reset cwnd to " << m_tcb->m_cWnd << ", ssthresh to " <<
-               m_tcb->m_ssThresh << " at fast recovery seqnum " << m_recover <<
-               " calculated in flight: " << bytesInFlight);
+  if (!m_congestionControl->HasCongControl ())
+    {
+      m_recoveryOps->EnterRecovery (m_tcb, m_dupAckCount);
+      NS_LOG_INFO (m_dupAckCount << " dupack. Enter fast recovery mode." <<
+                   "Reset cwnd to " << m_tcb->m_cWnd << ", ssthresh to " <<
+                   m_tcb->m_ssThresh << " at fast recovery seqnum " << m_recover <<
+                   " calculated in flight: " << bytesInFlight);
+    }
 
   // (4.3) Retransmit the first data segment presumed dropped
   DoRetransmit ();
@@ -1587,9 +1589,13 @@ TcpSocketBase::DupAck ()
         // has left the network. This is equivalent to a SACK of one block.
         m_txBuffer->AddRenoSack ();
       }
-      m_recoveryOps->DoRecovery (m_tcb);
-      NS_LOG_INFO (m_dupAckCount << " Dupack received in fast recovery mode."
-                   "Increase cwnd to " << m_tcb->m_cWnd);
+      if (!m_congestionControl->HasCongControl ())
+        {
+          m_recoveryOps->DoRecovery (m_tcb);
+
+          NS_LOG_INFO (m_dupAckCount << " Dupack received in fast recovery mode."
+                       "Increase cwnd to " << m_tcb->m_cWnd);
+        }
     }
   else if (m_tcb->m_congState == TcpSocketState::CA_DISORDER)
     {
@@ -1788,7 +1794,7 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
             }
           DoRetransmit (); // Assume the next seq is lost. Retransmit lost packet
           m_tcb->m_cWndInfl = SafeSubtraction (m_tcb->m_cWndInfl, bytesAcked);
-          if (segsAcked >= 1)
+          if (segsAcked >= 1 && !m_congestionControl->HasCongControl ())
             {
               m_recoveryOps->DoRecovery (m_tcb);
             }
@@ -1908,25 +1914,26 @@ TcpSocketBase::ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpd
                             ackNumber << ", exiting CA_LOSS -> CA_OPEN");
             }
 
-          if (exitedFastRecovery)
+          NewAck (ackNumber, true);
+
+          if (!m_congestionControl->HasCongControl ())
             {
-              NewAck (ackNumber, true);
-              m_recoveryOps->ExitRecovery (m_tcb);
-              NS_LOG_DEBUG ("Leaving Fast Recovery; BytesInFlight() = " <<
-                            BytesInFlight () << "; cWnd = " << m_tcb->m_cWnd);
-            }
-          else
-            {
-              m_congestionControl->IncreaseWindow (m_tcb, segsAcked);
+              if (exitedFastRecovery)
+                {
+                  m_recoveryOps->ExitRecovery (m_tcb);
+                  NS_LOG_DEBUG ("Leaving Fast Recovery; BytesInFlight() = " <<
+                                BytesInFlight () << "; cWnd = " << m_tcb->m_cWnd);
+                }
+              else
+                {
+                  m_congestionControl->IncreaseWindow (m_tcb, segsAcked);
+                  m_tcb->m_cWndInfl = m_tcb->m_cWnd;
 
-              m_tcb->m_cWndInfl = m_tcb->m_cWnd;
-
-              NS_LOG_LOGIC ("Congestion control called: " <<
-                            " cWnd: " << m_tcb->m_cWnd <<
-                            " ssTh: " << m_tcb->m_ssThresh <<
-                            " segsAcked: " << segsAcked);
-
-              NewAck (ackNumber, true);
+                  NS_LOG_LOGIC ("Congestion control called," <<
+                                " cWnd: " << m_tcb->m_cWnd <<
+                                " ssTh: " << m_tcb->m_ssThresh <<
+                                " segsAcked: " << segsAcked);
+                }
             }
         }
     }

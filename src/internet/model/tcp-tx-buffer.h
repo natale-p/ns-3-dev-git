@@ -25,11 +25,11 @@
 #include "ns3/object.h"
 #include "ns3/traced-value.h"
 #include "ns3/sequence-number.h"
-#include "ns3/nstime.h"
 #include "ns3/tcp-option-sack.h"
 #include "ns3/packet.h"
 #include "ns3/data-rate.h"
 #include "ns3/tcp-socket-base.h"
+#include "ns3/tcp-tx-item.h"
 
 namespace ns3 {
 class Packet;
@@ -47,41 +47,6 @@ struct RateSample
   Time          m_ackElapsed;     //!< ACK time interval calculated from the most recent packet delivered
   uint32_t      m_packetLoss;
   uint32_t      m_priorInFlight;
-};
-
-/**
- * \ingroup tcp
- *
- * \brief Item that encloses the application packet and some flags for it
- */
-class TcpTxItem
-{
-public:
-  // Default constructor, copy-constructor, destructor
-
-  /**
-   * \brief Print the time
-   * \param os ostream
-   */
-  void Print (std::ostream &os) const;
-
-  /**
-   * \brief Get the size in the sequence number space
-   *
-   * \return 1 if the packet size is 0 or there's no packet, otherwise the size of the packet
-   */
-  uint32_t GetSeqSize (void) const { return m_packet && m_packet->GetSize () > 0 ? m_packet->GetSize () : 1; }
-
-  SequenceNumber32 m_startSeq {0};     //!< Sequence number of the item (if transmitted)
-  Ptr<Packet> m_packet {nullptr};    //!< Application packet (can be null)
-  bool m_lost          {false};      //!< Indicates if the segment has been lost (RTO)
-  bool m_retrans       {false};      //!< Indicates if the segment is retransmitted
-  Time m_lastSent      {Time::Min()};//!< Timestamp of the time at which the segment has been sent last time
-  bool m_sacked        {false};      //!< Indicates if the segment has been SACKed
-  uint64_t m_delivered {0};          //!< Connection's delivered data at the time the packet was sent
-  Time m_deliveredTime {Seconds (0)};//!< Connection's delivered time at the time the packet was sent
-  Time m_firstSentTime {Seconds (0)};//!< Connection's first sent time at the time the packet was sent
-  bool m_isAppLimited  {false};      //!< Connection's app limited at the time the packet was sent
 };
 
 /**

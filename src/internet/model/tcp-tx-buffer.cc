@@ -34,45 +34,6 @@
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
-
-void
-TcpTxItem::Print (std::ostream &os) const
-{
-  bool comma = false;
-  os << "[" << m_startSeq << ";" << m_startSeq + GetSeqSize () << "|"
-     << GetSeqSize () << "]";
-
-  if (m_lost)
-    {
-      os << "[lost]";
-      comma = true;
-    }
-  if (m_retrans)
-    {
-      if (comma)
-        {
-          os << ",";
-        }
-
-      os << "[retrans]";
-      comma = true;
-    }
-  if (m_sacked)
-    {
-      if (comma)
-        {
-          os << ",";
-        }
-      os << "[sacked]";
-      comma = true;
-    }
-  if (comma)
-    {
-      os << ",";
-    }
-  os << "[" << m_lastSent.GetSeconds () << "]";
-}
-
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);
 
 TypeId

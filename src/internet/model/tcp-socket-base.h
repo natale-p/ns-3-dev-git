@@ -31,6 +31,7 @@
 #include "ns3/sequence-number.h"
 #include "ns3/data-rate.h"
 #include "ns3/node.h"
+#include "ns3/tcp-rate-ops.h"
 #include "tcp-rx-buffer.h"
 #include "tcp-tx-buffer.h"
 #include "rtt-estimator.h"
@@ -193,15 +194,6 @@ public:
 
   Time                   m_minRtt  {Time::Max ()};   //!< Minimum RTT observed throughout the connection
 
-  TracedValue<uint32_t>  m_bytesInFlight {0};        //!< Bytes in flight
-  TracedValue<Time>      m_lastRtt {Seconds (0.0)};  //!< Last RTT sample collected
-
-  uint64_t               m_delivered       {0};              //!< The total amount of data in bytes delivered so far
-  Time                   m_deliveredTime   {Seconds (0)};    //!< Simulator time when m_delivered was last updated
-  Time                   m_firstSentTime   {Seconds (0)};    //!< The send time of the packet that was most recently marked as delivered
-  uint32_t               m_appLimited      {0};              //!< The index of the last transmitted packet marked as application-limited
-  uint32_t               m_txItemDelivered {0};
-  uint32_t               m_lastAckedSackedBytes {0};         //!< Size of data sacked in the last ack
   /**
    * \brief Get cwnd in segments rather than bytes
    *
@@ -486,16 +478,6 @@ public:
   TracedCallback<SequenceNumber32, SequenceNumber32> m_nextTxSequenceTrace;
 
   /**
-   * \brief Callback pointer for bytesInFlight trace chaining
-   */
-  TracedCallback<uint32_t, uint32_t> m_bytesInFlightTrace;
-
-  /**
-   * \brief Callback pointer for RTT trace chaining
-   */
-  TracedCallback<Time, Time> m_lastRttTrace;
-
-  /**
    * \brief Callback function to hook to TcpSocketState congestion window
    * \param oldValue old cWnd value
    * \param newValue new cWnd value
@@ -530,20 +512,6 @@ public:
    * \param newValue new nextTxSeq value
    */
   void UpdateNextTxSequence (SequenceNumber32 oldValue, SequenceNumber32 newValue);
-
-  /**
-   * \brief Callback function to hook to TcpSocketState bytes inflight
-   * \param oldValue old bytesInFlight value
-   * \param newValue new bytesInFlight value
-   */
-  void UpdateBytesInFlight (uint32_t oldValue, uint32_t newValue);
-
-  /**
-   * \brief Callback function to hook to TcpSocketState rtt
-   * \param oldValue old rtt value
-   * \param newValue new rtt value
-   */
-  void UpdateRtt (Time oldValue, Time newValue);
 
   /**
    * \brief Install a congestion control algorithm on this socket
@@ -971,9 +939,10 @@ protected:
    * \param scoreboardUpdated if true indicates that the scoreboard has been
    * \param oldHeadSequence value of HeadSequence before ack
    * updated with SACK information
+   * \return the number of bytes (newly) acked, or 0 if it was a dupack
    */
-  virtual void ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpdated,
-                           const SequenceNumber32 &oldHeadSequence);
+  virtual uint32_t ProcessAck (const SequenceNumber32 &ackNumber, bool scoreboardUpdated,
+                               const SequenceNumber32 &oldHeadSequence);
 
   /**
    * \brief Recv of a data, put into buffer, call L7 to get it if necessary
@@ -1057,10 +1026,9 @@ protected:
    * Timestamp and Window scale are managed in other pieces of code.
    *
    * \param tcpHeader Header of the segment
-   * \param scoreboardUpdated indicates if the scoreboard was updated due to a
-   * SACK option
+   * \param [in] bytesSacked Number of bytes SACKed, or 0
    */
-  void ReadOptions (const TcpHeader &tcpHeader, bool &scoreboardUpdated);
+  void ReadOptions (const TcpHeader &tcpHeader, uint32_t *bytesSacked);
 
   /**
    * \brief Return true if the specified option is enabled
@@ -1112,9 +1080,9 @@ protected:
    * \brief Read the SACK option
    *
    * \param option SACK option from the header
-   * \returns true in case of an update to the SACKed blocks
+   * \returns the number of bytes sacked by this option
    */
-  bool ProcessOptionSack (const Ptr<const TcpOption> option);
+  uint32_t ProcessOptionSack(const Ptr<const TcpOption> option);
 
   /**
    * \brief Add the SACK PERMITTED option to the header
@@ -1199,6 +1167,7 @@ protected:
   // Timeouts
   TracedValue<Time> m_rto     {Seconds (0.0)}; //!< Retransmit timeout
   Time              m_minRto  {Time::Max ()};   //!< minimum value of the Retransmit timeout
+  TracedValue<Time> m_lastRtt {Seconds (0.0)}; //!< Last RTT sample collected
   Time              m_clockGranularity {Seconds (0.001)}; //!< Clock Granularity used in RTO calcs
   Time              m_delAckTimeout    {Seconds (0.0)};   //!< Time to delay an ACK
   Time              m_persistTimeout   {Seconds (0.0)};   //!< Time between sending 1-byte probes
@@ -1239,6 +1208,7 @@ protected:
   TracedValue<uint32_t> m_advWnd             {0};  //!< Advertised Window size
   TracedValue<SequenceNumber32> m_highRxMark {0};  //!< Highest seqno received
   TracedValue<SequenceNumber32> m_highRxAckMark {0}; //!< Highest ack received
+  TracedValue<uint32_t>         m_bytesInFlight {0}; //!< Bytes in flight
 
   // Options
   bool    m_sackEnabled       {true}; //!< RFC SACK option enabled
@@ -1258,6 +1228,7 @@ protected:
   // Transmission Control Block
   Ptr<TcpSocketState>    m_tcb {nullptr};               //!< Congestion control informations
   Ptr<TcpCongestionOps>  m_congestionControl {nullptr}; //!< Congestion control
+  Ptr<TcpRateOps>        m_rateOps {nullptr};           //!< Rate operations
 
   // Guesses over the other connection end
   bool m_isFirstPartialAck {true}; //!< First partial ACK during RECOVERY

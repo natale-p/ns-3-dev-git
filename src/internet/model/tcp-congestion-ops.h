@@ -20,6 +20,7 @@
 #define TCPCONGESTIONOPS_H
 
 #include "ns3/tcp-socket-base.h"
+#include "ns3/tcp-rate-ops.h"
 
 namespace ns3 {
 
@@ -174,9 +175,9 @@ public:
    * change directly cWnd and pacing rate.
    *
    * \param tcb internal congestion state
-   * \param rs count of segments acked
+   * \param rs rate sample
    */
-  virtual void CongControl (Ptr<TcpSocketState> tcb, const struct RateSample *rs)
+  virtual void CongControl (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample &rs)
   {
     NS_UNUSED (tcb);
     NS_UNUSED (rs);

@@ -26,28 +26,10 @@
 #include "ns3/traced-value.h"
 #include "ns3/sequence-number.h"
 #include "ns3/tcp-option-sack.h"
-#include "ns3/packet.h"
-#include "ns3/data-rate.h"
-#include "ns3/tcp-socket-base.h"
 #include "ns3/tcp-tx-item.h"
 
 namespace ns3 {
 class Packet;
-class TcpSocketState;
-
-struct RateSample
-{
-  DataRate      m_deliveryRate;   //!< The delivery rate sample
-  uint32_t      m_isAppLimited;   //!< Indicates whether the rate sample is application-limited
-  Time          m_interval;       //!< The length of the sampling interval
-  uint32_t      m_delivered {0};      //!< The amount of data marked as delivered over the sampling interval
-  uint32_t      m_priorDelivered {0}; //!< The delivered count of the most recent packet delivered
-  Time          m_priorTime;      //!< The delivered time of the most recent packet delivered
-  Time          m_sendElapsed;    //!< Send time interval calculated from the most recent packet delivered
-  Time          m_ackElapsed;     //!< ACK time interval calculated from the most recent packet delivered
-  uint32_t      m_packetLoss;
-  uint32_t      m_priorInFlight;
-};
 
 /**
  * \ingroup tcp
@@ -260,9 +242,10 @@ public:
    *
    * \param numBytes number of bytes to copy
    * \param seq start sequence number to extract
-   * \returns a packet
+   * \returns a pointer to the TcpTxItem that corresponds to what requested.
+   * Please do not delete the pointer, nor modify Packet data or sequence numbers.
    */
-  Ptr<Packet> CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
+  TcpTxItem* CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
 
   /**
    * \brief Set the head sequence of the buffer
@@ -278,15 +261,21 @@ public:
    *
    * \param seq The first sequence number to maintain after discarding all the
    * previous sequences.
+   * \param beforeDelCb Callback invoked, if it is not null, before the deletion
+   * of an Item (because it was, probably, ACKed)
    */
-  void DiscardUpTo (const SequenceNumber32& seq);
+  void DiscardUpTo (const SequenceNumber32& seq,
+                    const Callback<void, TcpTxItem *> &beforeDelCb = m_nullCb);
 
   /**
    * \brief Update the scoreboard
    * \param list list of SACKed blocks
-   * \returns true in case of an update
+   * \param sackedCb Callback invoked, if it is not null, when a segment has been
+   * SACKed by the receiver.
+   * \returns the number of bytes newly sacked by the list of blocks
    */
-  bool Update (const TcpOptionSack::SackList &list);
+  uint32_t Update(const TcpOptionSack::SackList &list,
+                  const Callback<void, TcpTxItem *> &sackedCb = m_nullCb);
 
   /**
    * \brief Check if a segment is lost
@@ -392,36 +381,6 @@ public:
    */
   void ResetRenoSack ();
 
-  /**
-   * \brief Returns ptr to RateSample class
-   */
-  struct RateSample * GetRateSample ();
-
-  /**
-   * \brief Set the TcpSocketState
-   */
-  void SetTcpSocketState (Ptr<TcpSocketState> tcb);
-
-  /**
-   * \brief Updates per packet variables required for rate sampling on each
-   * packet transmission
-   */
-  void UpdatePacketSent (SequenceNumber32 seq, uint32_t sz);
-
-  /**
-   * \brief Updates rate samples rate on arrival of each acknowledgement.
-   */
-  void UpdateRateSample (TcpTxItem *pps);
-
-  /**
-   * \brief Calculates delivery rate on arrival of each acknowledgement.
-   */
-  bool GenerateRateSample ();
-
-  /**
-   * \brief Checks if connection is app-limited upon each write from the application
-   */
-  void OnApplicationWrite ();
 private:
   friend std::ostream & operator<< (std::ostream & os, TcpTxBuffer const & tcpTxBuf);
 
@@ -491,17 +450,6 @@ private:
   /**
    * \brief Get a block of data previously transmitted
    *
-   * \see GetPacketFromList
-   *
-   * \param numBytes number of bytes to copy
-   * \param seq sequence requested
-   * \returns the item that contains the right packet
-   */
-  TcpTxItem* GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq);
-
-  /**
-   * \brief Get a block of data previously transmitted and Mark it as retransmitted
-   *
    * This is clearly a retransmission, and if everything is going well,
    * the block requested is matching perfectly with another one requested
    * in the past. If not, fragmentation or merge are required. We manage
@@ -513,7 +461,7 @@ private:
    * \param seq sequence requested
    * \returns the item that contains the right packet
    */
-  TcpTxItem* MarkTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq);
+  TcpTxItem* GetTransmittedSegment (uint32_t numBytes, const SequenceNumber32 &seq);
 
   /**
    * \brief Get a block (which is returned as Packet) from a list
@@ -643,9 +591,7 @@ private:
   uint32_t m_segmentSize {0}; //!< Segment size from TcpSocketBase
   bool     m_renoSack {false}; //!< Indicates if AddRenoSack was called
 
-  Ptr<TcpSocketState> m_tcb {nullptr};
-  struct RateSample   m_rs;
-
+  static Callback<void, TcpTxItem *> m_nullCb; //!< Null callback
 };
 
 /**

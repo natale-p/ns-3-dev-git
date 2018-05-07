@@ -90,7 +90,7 @@ public:
 
   virtual std::string GetName () const;
   virtual bool HasCongControl () const;
-  virtual void CongControl (Ptr<TcpSocketState> tcb, const struct RateSample *rs);
+  virtual void CongControl (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample &rs);
   virtual void CongestionStateSet (Ptr<TcpSocketState> tcb,
                                    const TcpSocketState::TcpCongState_t newState);
   virtual void CwndEvent (Ptr<TcpSocketState> tcb,
@@ -117,7 +117,7 @@ protected:
    * \param tcb the socket state.
    * \param rs  rate sample
    */
-  void CheckCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void CheckCyclePhase (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Checks whether its time to enter BBR_DRAIN or BBR_PROBE_BW state
@@ -129,7 +129,7 @@ protected:
    * \brief Identifies whether pipe or BDP is already full
    * \param rs  rate sample
    */
-  void CheckFullPipe (const struct RateSample * rs);
+  void CheckFullPipe (const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief This method handles the steps related to the ProbeRTT state
@@ -191,7 +191,7 @@ protected:
    * \param tcb the socket state.
    * \param rs  rate sample
    */
-  void HandleRestartFromIdle (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void HandleRestartFromIdle (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Estimates the target value for congestion window
@@ -222,7 +222,7 @@ protected:
    * \param rs  rate sample
    * \returns true if want to move to next value otherwise false.
    */
-  bool IsNextCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  bool IsNextCyclePhase (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Modulates congestion window in BBR_PROBE_RTT.
@@ -235,7 +235,7 @@ protected:
    * \param tcb the socket state.
    * \param rs  rate sample
    */
-  void ModulateCwndForRecovery (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void ModulateCwndForRecovery (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Helper to restore the last-known good congestion window
@@ -255,7 +255,7 @@ protected:
    * \param tcb the socket state.
    * \param rs  rate sample
    */
-  void SetCwnd (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void SetCwnd (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Updates pacing rate based on network model.
@@ -275,28 +275,28 @@ protected:
    * \param tcb the socket state.
    * \param rs rate sample
    */
-  void UpdateBtlBw (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void UpdateBtlBw (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Updates control parameters congestion windowm, pacing rate, send quantum.
    * \param tcb the socket state.
    * \param rs rate sample
    */
-  void UpdateControlParameters (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void UpdateControlParameters (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample &rs);
 
   /**
    * \brief Updates BBR network model (Maximum bandwidth and minimum RTT).
    * \param tcb the socket state.
    * \param rs rate sample
    */
-  void UpdateModelAndState (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void UpdateModelAndState (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Updates round counting related variables.
    * \param tcb the socket state.
    * \param rs rate sample
    */
-  void UpdateRound (Ptr<TcpSocketState> tcb, const struct RateSample * rs);
+  void UpdateRound (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs);
 
   /**
    * \brief Updates minimum RTT.

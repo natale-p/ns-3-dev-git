@@ -154,10 +154,10 @@ TcpBbr::EnterStartup ()
 }
 
 void
-TcpBbr::HandleRestartFromIdle (Ptr<TcpSocketState> tcb, const RateSample * rs)
+TcpBbr::HandleRestartFromIdle (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
-  if (tcb->m_bytesInFlight.Get () == 0U && rs->m_isAppLimited)
+  if (tcb->m_bytesInFlight.Get () == 0U && rs.m_isAppLimited)
     {
       m_idleRestart = true;
       if (m_state == BbrMode_t::BBR_PROBE_BW)
@@ -202,7 +202,7 @@ TcpBbr::AdvanceCyclePhase ()
 }
 
 bool
-TcpBbr::IsNextCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::IsNextCyclePhase (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   bool isFullLength = (Simulator::Now () - m_cycleStamp) > m_rtProp;
@@ -212,16 +212,16 @@ TcpBbr::IsNextCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
     }
   else if (m_pacingGain > 1)
     {
-      return isFullLength && (rs->m_packetLoss > 0 || rs->m_priorInFlight >= InFlight (tcb, m_pacingGain));
+      return isFullLength && (rs.m_packetLoss > 0 || rs.m_priorInFlight >= InFlight (tcb, m_pacingGain));
     }
   else
     {
-      return isFullLength || rs->m_priorInFlight <= InFlight (tcb, 1);
+      return isFullLength || rs.m_priorInFlight <= InFlight (tcb, 1);
     }
 }
 
 void
-TcpBbr::CheckCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::CheckCyclePhase (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   if (m_state == BbrMode_t::BBR_PROBE_BW && IsNextCyclePhase (tcb, rs))
@@ -231,10 +231,10 @@ TcpBbr::CheckCyclePhase (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
 }
 
 void
-TcpBbr::CheckFullPipe (const struct RateSample * rs)
+TcpBbr::CheckFullPipe (const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << rs);
-  if (m_isPipeFilled || !m_roundStart || rs->m_isAppLimited)
+  if (m_isPipeFilled || !m_roundStart || rs.m_isAppLimited)
     {
       return;
     }
@@ -421,12 +421,12 @@ TcpBbr::UpdateTargetCwnd (Ptr<TcpSocketState> tcb)
 }
 
 void
-TcpBbr::ModulateCwndForRecovery (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::ModulateCwndForRecovery (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
-  if ( rs->m_packetLoss > 0)
+  if ( rs.m_packetLoss > 0)
     {
-      tcb->m_cWnd = std::max ((int) tcb->m_cWnd.Get () - (int) rs->m_packetLoss, (int) tcb->m_segmentSize);
+      tcb->m_cWnd = std::max ((int) tcb->m_cWnd.Get () - (int) rs.m_packetLoss, (int) tcb->m_segmentSize);
     }
 
   if (m_packetConservation)
@@ -446,7 +446,7 @@ TcpBbr::ModulateCwndForProbeRTT (Ptr<TcpSocketState> tcb)
 }
 
 void
-TcpBbr::SetCwnd (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::SetCwnd (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   UpdateTargetCwnd (tcb);
@@ -476,7 +476,7 @@ TcpBbr::SetCwnd (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
 }
 
 void
-TcpBbr::UpdateRound (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::UpdateRound (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   if (tcb->m_txItemDelivered >= m_nextRoundDelivered)
@@ -492,24 +492,24 @@ TcpBbr::UpdateRound (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
 }
 
 void
-TcpBbr::UpdateBtlBw (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::UpdateBtlBw (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
-  if (rs->m_deliveryRate == 0)
+  if (rs.m_deliveryRate == 0)
     {
       return;
     }
 
   UpdateRound (tcb, rs);
 
-  if (rs->m_deliveryRate >= m_maxBwFilter.GetBest () || !rs->m_isAppLimited)
+  if (rs.m_deliveryRate >= m_maxBwFilter.GetBest () || !rs.m_isAppLimited)
     {
-      m_maxBwFilter.Update (rs->m_deliveryRate, m_roundCount);
+      m_maxBwFilter.Update (rs.m_deliveryRate, m_roundCount);
     }
 }
 
 void
-TcpBbr::UpdateModelAndState (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::UpdateModelAndState (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample &rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   UpdateBtlBw (tcb, rs);
@@ -521,7 +521,7 @@ TcpBbr::UpdateModelAndState (Ptr<TcpSocketState> tcb, const struct RateSample * 
 }
 
 void
-TcpBbr::UpdateControlParameters (Ptr<TcpSocketState> tcb, const struct RateSample * rs)
+TcpBbr::UpdateControlParameters (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample & rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   SetPacingRate (tcb, m_pacingGain);
@@ -589,7 +589,7 @@ TcpBbr::HasCongControl () const
 }
 
 void
-TcpBbr::CongControl (Ptr<TcpSocketState> tcb, const struct RateSample *rs)
+TcpBbr::CongControl (Ptr<TcpSocketState> tcb, const TcpRateOps::TcpRateSample &rs)
 {
   NS_LOG_FUNCTION (this << tcb << rs);
   UpdateModelAndState (tcb, rs);

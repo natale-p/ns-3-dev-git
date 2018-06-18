@@ -34,6 +34,7 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("TcpTxBuffer");
 NS_OBJECT_ENSURE_REGISTERED (TcpTxBuffer);
 
+Callback<void, TcpTxItem *> TcpTxBuffer::m_nullCb = MakeNullCallback<void, TcpTxItem*> ();
 TypeId
 TcpTxBuffer::GetTypeId (void)
 {
@@ -557,7 +558,7 @@ TcpTxBuffer::MergeItems (TcpTxItem *t1, TcpTxItem *t2) const
 
   // If one is retrans and the other is not, cancel the retransmitted flag.
   // We are merging this segment for the retransmit, so the count will
-  // be updated in GetTransmittedSegment.
+  // be updated in MarkTransmittedSegment.
   if (! AreEquals (t1->m_retrans, t2->m_retrans))
     {
       if (t1->m_retrans)
@@ -607,7 +608,8 @@ TcpTxBuffer::RemoveFromCounts (TcpTxItem *item, uint32_t size)
     }
 }
 void
-TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
+TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq,
+                          const Callback<void, TcpTxItem *> &beforeDelCb)
 {
   NS_LOG_FUNCTION (this << seq);
 
@@ -655,6 +657,13 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
           NS_LOG_INFO ("Removed " << *item << " lost: " << m_lostOut <<
                        " retrans: " << m_retrans << " sacked: " << m_sackedOut <<
                        ". Remaining data " << m_size);
+
+          if (!beforeDelCb.IsNull ())
+            {
+              // Inform Rate algorithms only when a full packet is ACKed
+              beforeDelCb (item);
+            }
+
           delete item;
         }
       else if (offset > 0)
@@ -717,7 +726,8 @@ TcpTxBuffer::DiscardUpTo (const SequenceNumber32& seq)
 }
 
 uint32_t
-TcpTxBuffer::Update (const TcpOptionSack::SackList &list)
+TcpTxBuffer::Update (const TcpOptionSack::SackList &list,
+                     const Callback<void, TcpTxItem *> &sackedCb)
 {
   NS_LOG_FUNCTION (this);
   NS_LOG_INFO ("Updating scoreboard, got " << list.size () << " blocks to analyze");
@@ -776,6 +786,11 @@ TcpTxBuffer::Update (const TcpOptionSack::SackList &list)
                                ", checking sentList for block " << *(*item_it) <<
                                ", found in the sackboard, sacking, current highSack: " <<
                                m_highestSack.second);
+
+                  if (!sackedCb.IsNull ())
+                    {
+                      sackedCb (*item_it);
+                    }
                 }
             }
           else if (beginOfCurrentPacket + pktSize > (*option_it).second)

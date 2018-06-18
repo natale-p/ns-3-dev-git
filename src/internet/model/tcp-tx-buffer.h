@@ -242,9 +242,10 @@ public:
    *
    * \param numBytes number of bytes to copy
    * \param seq start sequence number to extract
-   * \returns a packet
+   * \returns a pointer to the TcpTxItem that corresponds to what requested.
+   * Please do not delete the pointer, nor modify Packet data or sequence numbers.
    */
-  Ptr<Packet> CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
+  TcpTxItem* CopyFromSequence (uint32_t numBytes, const SequenceNumber32& seq);
 
   /**
    * \brief Set the head sequence of the buffer

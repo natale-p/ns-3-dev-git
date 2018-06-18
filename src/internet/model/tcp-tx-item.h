@@ -53,6 +53,12 @@ public:
   bool IsSacked (void) const { return m_sacked; }
 
   /**
+   * \brief Is the item retransmitted?
+   * \return true if the item have been retransmitted
+   */
+  bool IsRetrans (void) const { return m_retrans; }
+
+  /**
    * \brief Get a copy of the Packet underlying this item
    * \return a copy of the Packet
    */

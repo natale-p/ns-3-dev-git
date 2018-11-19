@@ -197,7 +197,7 @@ public:
   /**
    * \brief Get the initial sequence number of the connection
    *
-   * The returned value is, right now, the value used in the inizialization
+   * The returned value is, right now, the value used in the initialization
    * of the m_nextTxSequence variable. It has no effect on the value 'on the wire'.
    * \return the initial sequence number
    */

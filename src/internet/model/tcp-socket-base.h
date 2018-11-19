@@ -1056,7 +1056,7 @@ protected:
    * Timestamp and Window scale are managed in other pieces of code.
    *
    * \param tcpHeader Header of the segment
-   * \param [in] bytesSacked Number of bytes SACKed, or 0
+   * \param [out] bytesSacked Number of bytes SACKed, or 0
    */
   void ReadOptions (const TcpHeader &tcpHeader, uint32_t *bytesSacked);
 

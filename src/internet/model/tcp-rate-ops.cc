@@ -22,6 +22,7 @@
 
 namespace ns3 {
 
+NS_LOG_COMPONENT_DEFINE ("TcpRateOps");
 NS_OBJECT_ENSURE_REGISTERED (TcpRateOps);
 
 TypeId
@@ -34,7 +35,6 @@ TcpRateOps::GetTypeId (void)
   return tid;
 }
 
-NS_LOG_COMPONENT_DEFINE ("TcpRateLinux");
 NS_OBJECT_ENSURE_REGISTERED (TcpRateLinux);
 
 TypeId

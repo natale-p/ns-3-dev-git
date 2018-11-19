@@ -1147,7 +1147,8 @@ to a congestion avoidance algorithm:
 The implementation to estimate delivery rate is a joint work between TcpTxBuffer and TcpRateOps.
 For more information, please take a look at their doxygen documentation.
 
-The implementation follows the RFC (Delivery Rate Estimation): https://tools.ietf.org/html/draft-cheng-iccrg-delivery-rate-estimation-00
+The implementation follows the Internet draft (Delivery Rate Estimation):
+https://tools.ietf.org/html/draft-cheng-iccrg-delivery-rate-estimation-00
 
 Current limitations
 +++++++++++++++++++

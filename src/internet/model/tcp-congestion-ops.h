@@ -164,6 +164,13 @@ public:
    * \brief Returns true when Congestion Control Algorithm implements CongControl
    *
    * \return true if CC implements CongControl function
+   *
+   * This function is the equivalent in C++ of the C checks that are used
+   * in the Linux kernel to see if an optional function has been defined.
+   * Since CongControl is optional, not all congestion controls have it. But,
+   * from the perspective of TcpSocketBase, the behavior is different if
+   * CongControl is present. Therefore, this check should return true for any
+   * congestion controls that implements the CongControl optional function.
    */
   virtual bool HasCongControl () const
   {
